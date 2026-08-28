@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RosterHelper — free classroom seating chart maker for teachers</title>
 <meta name="description" content="Build seating charts with keep-apart and accommodation rules, shuffle in one click, take attendance, make groups, cold-call fairly, and print whole-day sub packets. Free, no account — your roster never leaves your device.">
-<meta property="og:title" content="RosterHelper — seating charts that pull their weight">
+<meta property="og:title" content="RosterHelper — draft your room, rules do the rest">
 <meta property="og:description" content="Seating charts, attendance, groups, cold-call, and sub packets in one free tool. No accounts, no server — student data never leaves your device.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rosterhelper.com/">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233c7fb1'/%3E%3Crect x='6' y='6' width='8' height='8' rx='2' fill='%23fff'/%3E%3Crect x='18' y='6' width='8' height='8' rx='2' fill='%23fff' opacity='.75'/%3E%3Crect x='6' y='18' width='8' height='8' rx='2' fill='%23fff' opacity='.75'/%3E%3Crect x='18' y='18' width='8' height='8' rx='2' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e3a5c'/%3E%3Crect x='6' y='6' width='20' height='20' rx='2' fill='none' stroke='%23bfe0f5' stroke-width='1.6'/%3E%3Crect x='10' y='10' width='5' height='4' fill='none' stroke='%23bfe0f5' stroke-width='1.3'/%3E%3Crect x='17' y='10' width='5' height='4' fill='none' stroke='%23ffd66b' stroke-width='1.6'/%3E%3Crect x='10' y='17' width='5' height='4' fill='none' stroke='%23bfe0f5' stroke-width='1.3'/%3E%3Crect x='17' y='17' width='5' height='4' fill='none' stroke='%23bfe0f5' stroke-width='1.3'/%3E%3C/svg%3E">
 <script>
   // Share links from the app (old or new) land here with a #share= fragment —
   // hand them straight to the app so the shared chart opens.
@@ -21,235 +21,246 @@
 <script data-goatcounter="https://rosterhelper.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <style>
   :root {
+    --navy: #0e3a5c;
+    --navy-deep: #0a2e4a;
+    --grid-line: #1c4f75;
+    --draft: #bfe0f5;
+    --sky: #9fc6e3;
+    --amber: #ffd66b;
+    --amber-edge: #e3b93f;
+    --amber-ink: #3a2c05;
     --ink: oklch(0.26 0.008 260);
     --muted: oklch(0.45 0.01 260);
-    --line: oklch(0.82 0.006 260);
+    --line: oklch(0.85 0.006 260);
     --line-dark: oklch(0.72 0.008 260);
     --blue: oklch(0.55 0.11 235);
     --blue-dark: oklch(0.5 0.11 235);
     --paper: #fbfbfa;
-    --card: #fff;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
     font-family: "IBM Plex Sans", system-ui, sans-serif; line-height: 1.55; }
   a { color: var(--blue-dark); }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
-  nav { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; }
-  .wordmark { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none; color: var(--ink); display: flex; align-items: center; gap: 9px; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  nav { position: sticky; top: 0; z-index: 50; background: rgba(10,46,74,0.92);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(191,224,245,0.18); }
+  .navrow { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; }
+  .wordmark { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none;
+    color: #f2f9ff; display: flex; align-items: center; gap: 10px; }
   .wordmark svg { flex-shrink: 0; }
-  .btn { display: inline-block; padding: 10px 20px; border: 2px solid var(--blue-dark); border-radius: 6px;
-    background: var(--blue); color: #fff; font-size: 15px; font-weight: 500; text-decoration: none; cursor: pointer; }
-  .btn:hover { background: var(--blue-dark); }
+  .btn { display: inline-block; padding: 10px 20px; border-radius: 5px; font-size: 15px; font-weight: 600;
+    text-decoration: none; cursor: pointer; }
+  .btn.amber { background: var(--amber); color: var(--amber-ink); border: 2px solid var(--amber-edge); }
+  .btn.amber:hover { background: #ffe08a; }
+  .btn.small { font-size: 13px; padding: 7px 14px; }
   .btn.big { font-size: 17px; padding: 13px 28px; }
-  header.hero { padding: 52px 0 26px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 44px; align-items: center; }
-  h1 { font-size: 42px; line-height: 1.14; letter-spacing: -0.02em; margin: 0 0 16px; font-weight: 600; }
-  .sub { font-size: 17px; color: var(--muted); margin: 0 0 26px; max-width: 46ch; }
-  .cta-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .cta-note { font-size: 13px; color: var(--muted); }
-  .roomcard { background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 14px; box-shadow: 0 10px 30px rgba(30,33,40,0.07); }
-  .roomcard svg { display: block; width: 100%; height: auto; }
-  .privacy { margin: 34px 0 0; border: 2px solid var(--line); border-radius: 12px; background: var(--card);
-    padding: 22px 26px; display: flex; gap: 16px; align-items: flex-start; }
+
+  .hero { background: var(--navy); color: #f2f9ff; position: relative; overflow: hidden; }
+  .hero .gridbg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hero .inner { position: relative; display: grid; grid-template-columns: 1.02fr 0.98fr; gap: 46px;
+    align-items: center; padding-top: 64px; padding-bottom: 58px; }
+  .overline { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; letter-spacing: 0.14em;
+    color: var(--sky); margin: 0 0 14px; }
+  h1 { font-size: 46px; line-height: 1.08; letter-spacing: -0.02em; margin: 0 0 18px; font-weight: 600; color: #f6faff; }
+  .sub { font-size: 16.5px; color: var(--sky); margin: 0 0 28px; max-width: 46ch; }
+  .cta-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .cta-note { font-size: 13px; color: var(--sky); }
+  .sheet { border: 2px solid var(--draft); outline: 1px solid rgba(191,224,245,0.35); outline-offset: 5px;
+    border-radius: 4px; padding: 14px; background: rgba(10,46,74,0.45); }
+  .sheet svg { display: block; width: 100%; height: auto; }
+
+  .privacy { margin: -26px auto 0; position: relative; z-index: 5; border: 2px solid var(--line);
+    border-radius: 10px; background: #fff; padding: 22px 26px; display: flex; gap: 16px;
+    align-items: flex-start; box-shadow: 0 12px 30px rgba(14,58,92,0.10); }
   .privacy strong { font-size: 16px; }
   .privacy p { margin: 4px 0 0; color: var(--muted); font-size: 14.5px; }
   .shield { flex-shrink: 0; margin-top: 2px; }
-  section.features { padding: 44px 0 8px; }
-  h2 { font-size: 26px; letter-spacing: -0.01em; margin: 0 0 6px; font-weight: 600; }
-  .h2sub { color: var(--muted); font-size: 15px; margin: 0 0 24px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
-  .card { background: var(--card); border: 2px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+
+  section.features { padding: 58px 0 14px; }
+  h2 { font-size: 28px; letter-spacing: -0.01em; margin: 0 0 6px; font-weight: 600; }
+  .h2sub { color: var(--muted); font-size: 15px; margin: 0 0 26px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+  .card { background: #fff; border: 2px solid var(--line); border-radius: 10px; padding: 18px 20px;
+    transition: transform 0.18s ease, border-color 0.18s ease; }
+  .card:hover { transform: translateY(-3px); border-color: var(--navy); }
   .card h3 { margin: 0 0 6px; font-size: 15.5px; font-weight: 600; }
   .card p { margin: 0; font-size: 13.8px; color: var(--muted); }
-  .tag { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--blue-dark); background: oklch(0.95 0.02 235); border-radius: 4px; padding: 2px 7px; margin-bottom: 9px; }
-  section.closer { text-align: center; padding: 52px 0 60px; }
-  .closer p { color: var(--muted); max-width: 52ch; margin: 10px auto 24px; }
-  footer { border-top: 2px solid var(--line); padding: 22px 0 34px; display: flex; justify-content: space-between;
-    gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
-  .modal-back { position: fixed; inset: 0; z-index: 100; background: rgba(30,33,40,0.42); display: none;
+  .tag { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: 0.1em;
+    color: var(--navy); background: #e8f1f8; border-radius: 4px; padding: 3px 8px; margin-bottom: 10px; }
+
+  section.closer { margin-top: 64px; background: var(--navy); color: #f2f9ff; position: relative; overflow: hidden; }
+  .closer .gridbg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .closer .inner { position: relative; text-align: center; padding: 56px 24px 62px; }
+  .closer h2 { color: #f6faff; }
+  .closer p { color: var(--sky); max-width: 52ch; margin: 10px auto 26px; }
+
+  footer { border-top: 2px solid var(--line); padding: 22px 0 34px; font-size: 13px; color: var(--muted); background: var(--paper); }
+
+  .rv { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .rv.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .rv { opacity: 1; transform: none; transition: none; }
+    .card { transition: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  .modal-back { position: fixed; inset: 0; z-index: 100; background: rgba(10,25,40,0.5); display: none;
     align-items: center; justify-content: center; padding: 18px; }
   .modal { background: #fff; border: 2px solid var(--line-dark); border-radius: 12px; max-width: 560px; width: 100%;
-    padding: 26px 30px; box-shadow: 0 18px 50px rgba(30,33,40,0.18); }
+    padding: 26px 30px; box-shadow: 0 18px 50px rgba(10,25,40,0.25); }
   .modal h3 { margin: 0 0 4px; font-size: 20px; letter-spacing: -0.01em; }
   .modal .q { margin: 0 0 18px; color: var(--muted); font-size: 14.5px; }
   .deskgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 16px; }
   .deskopt { border: 2px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; padding: 12px 8px 10px;
     display: flex; flex-direction: column; align-items: center; gap: 8px; font: inherit; }
-  .deskopt:hover { border-color: var(--blue); background: oklch(0.97 0.01 235); }
+  .deskopt:hover { border-color: var(--navy); background: #eef5fa; }
   .deskopt svg { height: 62px; width: auto; display: block; }
   .deskopt span { font-size: 12.5px; font-weight: 500; color: var(--ink); }
   .modal .skip { background: none; border: none; font: inherit; font-size: 13px; color: var(--muted);
     cursor: pointer; text-decoration: underline; padding: 0; }
   .modal .note { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
-  @media (max-width: 800px) {
-    header.hero { grid-template-columns: 1fr; padding-top: 30px; gap: 30px; }
-    h1 { font-size: 33px; }
+
+  @media (max-width: 860px) {
+    .hero .inner { grid-template-columns: 1fr; padding-top: 40px; padding-bottom: 46px; gap: 32px; }
+    h1 { font-size: 34px; }
+    .privacy { margin-top: 18px; box-shadow: none; }
   }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <nav>
+<nav>
+  <div class="wrap navrow">
     <a class="wordmark" href="/">
-      <svg width="26" height="26" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="oklch(0.55 0.11 235)"/><rect x="6" y="6" width="8" height="8" rx="2" fill="#fff"/><rect x="18" y="6" width="8" height="8" rx="2" fill="#fff" opacity=".75"/><rect x="6" y="18" width="8" height="8" rx="2" fill="#fff" opacity=".75"/><rect x="18" y="18" width="8" height="8" rx="2" fill="#fff"/></svg>
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0a2e4a"/><rect x="6" y="6" width="20" height="20" rx="2" fill="none" stroke="#bfe0f5" stroke-width="1.6"/><rect x="10" y="10" width="5" height="4" fill="none" stroke="#bfe0f5" stroke-width="1.3"/><rect x="17" y="10" width="5" height="4" fill="none" stroke="#ffd66b" stroke-width="1.6"/><rect x="10" y="17" width="5" height="4" fill="none" stroke="#bfe0f5" stroke-width="1.3"/><rect x="17" y="17" width="5" height="4" fill="none" stroke="#bfe0f5" stroke-width="1.3"/></svg>
       RosterHelper
     </a>
-    <a class="btn" href="/app/">Open the app</a>
-  </nav>
+    <a class="btn amber small" href="/app/">Open the app</a>
+  </div>
+</nav>
 
-  <header class="hero">
+<header class="hero">
+  <svg class="gridbg" aria-hidden="true"><defs><pattern id="bpgrid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0v28" fill="none" stroke="#1c4f75" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#bpgrid)"/></svg>
+  <div class="wrap inner">
     <div>
-      <h1>Seating charts that pull their weight</h1>
-      <p class="sub">Build your room, set the rules — keep these two apart, front row for this one, never seated alone —
-        and shuffle. Then take attendance, cold-call fairly, make groups, and print a whole-day sub packet
-        from the same chart.</p>
+      <p class="overline">CLASSROOM SEATING CHARTS · FREE FOR TEACHERS</p>
+      <h1>Draft your room.<br>Rules do the rest.</h1>
+      <p class="sub">Set the rules — keep these two apart, front row for this one, never seated alone —
+        and shuffle. Then take attendance, cold-call fairly, make groups, and print a whole-day
+        sub packet from the same chart.</p>
       <div class="cta-row">
-        <a class="btn big" href="/app/">Open RosterHelper — it's free</a>
-        <span class="cta-note">No account. No install. Works on school Chromebooks.</span>
+        <a class="btn amber big" href="/app/">Open RosterHelper — it's free</a>
+        <span class="cta-note">No account. No install.<br>Works on school Chromebooks.</span>
       </div>
     </div>
-    <div class="roomcard" aria-hidden="true">
-      <svg viewBox="0 0 460 330" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans, sans-serif">
-        <rect x="1" y="1" width="458" height="328" rx="10" fill="#fdfdfc" stroke="oklch(0.86 0.006 260)" stroke-width="2"/>
-        <rect x="120" y="10" width="220" height="14" rx="4" fill="oklch(0.9 0.01 260)"/>
-        <text x="230" y="21" text-anchor="middle" font-size="9" fill="oklch(0.5 0.01 260)">FRONT OF ROOM</text>
-        <g>
-          <g transform="translate(38,52)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Maya R.</text>
-          </g>
-          <g transform="translate(96,52)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Jon A.</text>
-          </g>
-          <g transform="translate(190,52)">
-            <rect width="54" height="40" rx="6" fill="oklch(0.93 0.04 235)" stroke="oklch(0.55 0.11 235)" stroke-width="2.5"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" font-weight="600" fill="oklch(0.4 0.1 235)">Dre W.</text>
-          </g>
-          <g transform="translate(248,52)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Lena K.</text>
-          </g>
-          <g transform="translate(342,52)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Sam T.</text>
-          </g>
-          <g transform="translate(38,118)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Priya N.</text>
-          </g>
-          <g transform="translate(96,118)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Cole B.</text>
-          </g>
-          <g transform="translate(190,118)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Ana G.</text>
-          </g>
-          <g transform="translate(248,118)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Leo M.</text>
-          </g>
-          <g transform="translate(342,118)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Kai D.</text>
-          </g>
-          <g transform="translate(67,184)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Zoe F.</text>
-          </g>
-          <g transform="translate(190,184)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Omar S.</text>
-          </g>
-          <g transform="translate(248,184)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Ivy C.</text>
-          </g>
-          <g transform="translate(342,184)">
-            <rect width="54" height="40" rx="6" fill="#fff" stroke="oklch(0.72 0.008 260)" stroke-width="2"/>
-            <text x="27" y="24" text-anchor="middle" font-size="10" fill="oklch(0.3 0.01 260)">Ben H.</text>
-          </g>
+    <div class="sheet" aria-hidden="true">
+      <svg viewBox="0 0 440 330" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="436" height="326" rx="3" fill="none" stroke="#bfe0f5" stroke-width="2"/>
+        <line x1="110" y1="16" x2="330" y2="16" stroke="#9fc6e3" stroke-width="4"/>
+        <text x="220" y="34" text-anchor="middle" font-size="10" fill="#9fc6e3" font-family="IBM Plex Mono, monospace">FRONT OF ROOM</text>
+        <g id="deskfield" fill="none" stroke="#bfe0f5" stroke-width="2">
+          <rect class="hd" x="36"  y="56"  width="52" height="38" rx="4"/>
+          <rect class="hd" x="96"  y="56"  width="52" height="38" rx="4"/>
+          <rect class="hd" x="186" y="56"  width="52" height="38" rx="4"/>
+          <rect class="hd" x="246" y="56"  width="52" height="38" rx="4"/>
+          <rect class="hd" x="336" y="56"  width="52" height="38" rx="4"/>
+          <rect class="hd" x="36"  y="118" width="52" height="38" rx="4"/>
+          <rect class="hd" x="96"  y="118" width="52" height="38" rx="4"/>
+          <rect class="hd" x="186" y="118" width="52" height="38" rx="4"/>
+          <rect class="hd" x="246" y="118" width="52" height="38" rx="4"/>
+          <rect class="hd" x="336" y="118" width="52" height="38" rx="4"/>
+          <rect class="hd" x="66"  y="180" width="52" height="38" rx="4"/>
+          <rect class="hd" x="186" y="180" width="52" height="38" rx="4"/>
+          <rect class="hd" x="246" y="180" width="52" height="38" rx="4"/>
+          <rect class="hd" x="336" y="180" width="52" height="38" rx="4"/>
         </g>
-        <rect x="30" y="258" width="86" height="34" rx="6" fill="oklch(0.94 0.01 260)" stroke="oklch(0.8 0.008 260)" stroke-width="2"/>
-        <text x="73" y="279" text-anchor="middle" font-size="9.5" fill="oklch(0.5 0.01 260)">Teacher desk</text>
-        <g transform="translate(200,252)">
-          <rect width="120" height="30" rx="15" fill="oklch(0.55 0.11 235)"/>
-          <text x="60" y="19" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">Shuffle</text>
-        </g>
-        <text x="350" y="271" font-size="10.5" fill="oklch(0.5 0.06 235)" font-family="IBM Plex Mono, monospace">✓ rules honored</text>
-        <text x="200" y="306" font-size="10" fill="oklch(0.55 0.01 260)">Pick: <tspan font-weight="600" fill="oklch(0.4 0.1 235)">Dre W.</tspan> — fair rotation, no repeats</text>
+        <rect x="30" y="248" width="86" height="32" rx="4" fill="none" stroke="#7fb8dd" stroke-width="2"/>
+        <text x="73" y="268" text-anchor="middle" font-size="9" fill="#9fc6e3" font-family="IBM Plex Mono, monospace">TEACHER</text>
+        <path d="M 398 328 A 40 40 0 0 0 358 288" fill="none" stroke="#7fb8dd" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <line x1="358" y1="328" x2="398" y2="328" stroke="#bfe0f5" stroke-width="3"/>
+        <line x1="30" y1="304" x2="298" y2="304" stroke="#7fb8dd" stroke-width="1" stroke-dasharray="5 4"/>
+        <line x1="30" y1="299" x2="30" y2="309" stroke="#7fb8dd" stroke-width="1"/>
+        <line x1="298" y1="299" x2="298" y2="309" stroke="#7fb8dd" stroke-width="1"/>
+        <text x="164" y="318" text-anchor="middle" font-size="9" fill="#9fc6e3" font-family="IBM Plex Mono, monospace">RM 114 · 30 SEATS · RULES: 4 OK</text>
       </svg>
     </div>
-  </header>
+  </div>
+</header>
 
-  <div class="privacy">
-    <svg class="shield" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.11 235)" stroke-width="2"><path d="M12 2l8 3.5v5.7c0 4.8-3.4 8.6-8 10.3-4.6-1.7-8-5.5-8-10.3V5.5L12 2z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/></svg>
+<div class="wrap">
+  <div class="privacy rv">
+    <svg class="shield" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0e3a5c" stroke-width="2" aria-hidden="true"><path d="M12 2l8 3.5v5.7c0 4.8-3.4 8.6-8 10.3-4.6-1.7-8-5.5-8-10.3V5.5L12 2z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/></svg>
     <div>
       <strong>Your roster never leaves your device.</strong>
       <p>RosterHelper has no accounts and no server — names, photos, accommodations, and attendance are processed
-        and stored entirely in your browser. Nothing about your students is uploaded, tracked, or sold — the only thing we measure is an anonymous, cookie-free count of site visits. Back up to a file any time.</p>
+        and stored entirely in your browser. Nothing about your students is uploaded, tracked, or sold — the only
+        thing we measure is an anonymous, cookie-free count of site visits. Back up to a file any time.</p>
     </div>
   </div>
 
   <section class="features">
-    <h2>One chart, a whole classroom of jobs</h2>
-    <p class="h2sub">Everything below ships today, free.</p>
+    <h2 class="rv">One chart, a whole classroom of jobs</h2>
+    <p class="h2sub rv">Everything below ships today, free.</p>
     <div class="grid">
-      <div class="card"><span class="tag">Seating</span>
+      <div class="card rv"><span class="tag">SEATING</span>
         <h3>Rules &amp; accommodations</h3>
         <p>Keep-apart, sit-together, front row, near the teacher, near the door, must sit alone. Private IEP/504-style
         flags generate the rules for you — and no student is ever seated with zero neighbors unless flagged.</p></div>
-      <div class="card"><span class="tag">Seating</span>
+      <div class="card rv"><span class="tag">SEATING</span>
         <h3>One-click shuffle</h3>
         <p>Honors every rule, flags what can't be satisfied, keeps pinned students put, and leans the class toward the
         front, back, or either side of the room. Undo covers every big change.</p></div>
-      <div class="card"><span class="tag">Daily use</span>
+      <div class="card rv"><span class="tag">DAILY USE</span>
         <h3>Attendance in two clicks</h3>
         <p>Tap a name: blue here, yellow tardy, red absent. Print or export a day or week log with P / T / A per
         student — straight from the chart you already have open.</p></div>
-      <div class="card"><span class="tag">Daily use</span>
+      <div class="card rv"><span class="tag">DAILY USE</span>
         <h3>Fair cold-call &amp; teach mode</h3>
         <p>A projector-friendly view with a Pick button that spins the room like a prize wheel — nobody gets picked
         twice until everyone's been picked once, and nobody looks singled out on screen.</p></div>
-      <div class="card"><span class="tag">Daily use</span>
+      <div class="card rv"><span class="tag">DAILY USE</span>
         <h3>Partners &amp; groups</h3>
         <p>Random pairs or groups of 3–5 that remember past pairings and avoid repeats, honor your rules, save under
         a name, and print as a one-page handout.</p></div>
-      <div class="card"><span class="tag">Printables</span>
+      <div class="card rv"><span class="tag">PRINTABLES</span>
         <h3>Whole-day sub packets</h3>
         <p>Fill in your schedule and lessons once; print or download a packet — a typeset plans page plus every
         class's seating chart, charts in landscape, faces included if you want them.</p></div>
-      <div class="card"><span class="tag">Printables</span>
+      <div class="card rv"><span class="tag">PRINTABLES</span>
         <h3>Name tents &amp; emergency lists</h3>
         <p>Fold-in-half desk cards for back-to-school week, and a grab-and-go class list with check-off boxes for
         drills — one click each.</p></div>
-      <div class="card"><span class="tag">Rosters</span>
+      <div class="card rv"><span class="tag">ROSTERS</span>
         <h3>Paste or upload any roster</h3>
         <p>Paste names straight from PowerSchool or a spreadsheet, upload CSV/XLSX, or import eTac PDFs — including
         the picture seating chart, so student faces appear right on the desks.</p></div>
-      <div class="card"><span class="tag">Rosters</span>
+      <div class="card rv"><span class="tag">ROSTERS</span>
         <h3>Periods, sharing &amp; backups</h3>
         <p>Save a roster per period and reuse it across charts. Share a chart, roster, or room layout with a
         colleague as a plain link. Back everything up to a file, restore anywhere.</p></div>
     </div>
   </section>
+</div>
 
-  <section class="closer">
-    <h2>Set up your room before first period</h2>
-    <p>No sign-up, no download, nothing to install — the whole tool loads as a single page
+<section class="closer">
+  <svg class="gridbg" aria-hidden="true"><rect width="100%" height="100%" fill="url(#bpgrid)"/></svg>
+  <div class="inner">
+    <h2 class="rv">Set up your room before first period</h2>
+    <p class="rv">No sign-up, no download, nothing to install — the whole tool loads as a single page
       and keeps working even on locked-down school networks.</p>
-    <a class="btn big" href="/app/">Open RosterHelper</a>
-  </section>
+    <a class="btn amber big" href="/app/">Open RosterHelper</a>
+  </div>
+</section>
 
-  <footer>
+<footer>
+  <div class="wrap" style="display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap">
     <span>© 2026 RosterHelper · Created by Benjamin Fox</span>
     <span>All data stays in your browser · <a href="mailto:feedback@rosterhelper.com?subject=RosterHelper%20feedback">Send feedback</a> · <a href="/app/">Open the app</a></span>
-  </footer>
-
-</div>
+  </div>
+</footer>
 
 <div class="modal-back" id="deskmodal">
   <div class="modal" id="deskmodalcard">
@@ -284,7 +295,6 @@
   var back = document.getElementById("deskmodal");
   try {
     if (localStorage.getItem(DONE)) return;
-    // Existing app users already chose a shape by using the app — don't ask.
     if (localStorage.getItem("seatingchart.v4")) { localStorage.setItem(DONE, "1"); return; }
   } catch (e) { return; }
   back.style.display = "flex";
@@ -295,13 +305,42 @@
       done();
       document.getElementById("deskmodalcard").innerHTML =
         "<h3>Got it!</h3><p class='q'>Your charts will start with <strong>" + btn.getAttribute("data-name").toLowerCase() +
-        "</strong> desks.</p><a class='btn big' href='/app/'>Open RosterHelper</a> " +
+        "</strong> desks.</p><a class='btn amber big' href='/app/'>Open RosterHelper</a> " +
         "<button class='skip' id='deskclose' style='margin-left:14px'>Keep reading</button>";
       document.getElementById("deskclose").addEventListener("click", function () { back.style.display = "none"; });
     });
   });
   document.getElementById("deskskip").addEventListener("click", function () { done(); back.style.display = "none"; });
   back.addEventListener("click", function (e) { if (e.target === back) { done(); back.style.display = "none"; } });
+})();
+
+(function () {
+  var els = [].slice.call(document.querySelectorAll(".rv"));
+  if (!("IntersectionObserver" in window)) { els.forEach(function (el) { el.classList.add("in"); }); return; }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } });
+  }, { threshold: 0.12 });
+  els.forEach(function (el) { io.observe(el); });
+})();
+
+(function () {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var desks = [].slice.call(document.querySelectorAll("#deskfield .hd"));
+  if (!desks.length) return;
+  var cur = 3;
+  function hot(i) {
+    desks.forEach(function (d, j) {
+      d.setAttribute("stroke", j === i ? "#ffd66b" : "#bfe0f5");
+      d.setAttribute("stroke-width", j === i ? "3" : "2");
+      d.setAttribute("fill", j === i ? "rgba(255,214,107,0.14)" : "none");
+    });
+  }
+  hot(cur);
+  setInterval(function () {
+    var next;
+    do { next = Math.floor(Math.random() * desks.length); } while (next === cur);
+    cur = next; hot(cur);
+  }, 1700);
 })();
 </script>
 </body>
