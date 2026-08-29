@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desk shape lab — RosterHelper</title>
+<meta name="description" content="Compare RosterHelper's Unique shape desk against the real MooreCo Hierarchy Shapes outline. Drag, rotate and snap desks together to see which geometry actually nests.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e3a5c'/%3E%3Crect x='6' y='6' width='20' height='20' rx='2' fill='none' stroke='%23bfe0f5' stroke-width='1.6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#0e3a5c; --navy-deep:#0a2e4a; --grid-line:#1c4f75; --draft:#bfe0f5; --sky:#9fc6e3;
+    --amber:#ffd66b; --amber-edge:#e3b93f; --amber-ink:#3a2c05;
+    --ink:oklch(0.26 0.008 260); --muted:oklch(0.45 0.01 260);
+    --line:oklch(0.85 0.006 260); --line-dark:oklch(0.72 0.008 260);
+    --blue:oklch(0.55 0.11 235); --blue-dark:oklch(0.5 0.11 235); --paper:#fbfbfa;
+    --bad:#d8543f; --good:#2f8f5b;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; background:var(--paper); color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif; line-height:1.55; }
+  a { color:var(--blue-dark); }
+  .wrap { max-width:1180px; margin:0 auto; padding:0 24px; }
+
+  nav { background:var(--navy-deep); border-bottom:1px solid rgba(191,224,245,0.18); }
+  .navrow { display:flex; align-items:center; justify-content:space-between; padding:13px 0; }
+  .wordmark { font-size:18px; font-weight:600; letter-spacing:-0.01em; text-decoration:none; color:#f2f9ff;
+    display:flex; align-items:center; gap:10px; }
+  .navlinks { display:flex; gap:18px; align-items:center; }
+  .navlinks a { color:var(--sky); text-decoration:none; font-size:14px; }
+  .navlinks a:hover { color:#f2f9ff; }
+
+  header.lab { background:var(--navy); color:#f2f9ff; padding:30px 0 34px; }
+  .overline { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:0.14em; color:var(--sky); margin:0 0 10px; }
+  header.lab h1 { font-size:32px; line-height:1.12; letter-spacing:-0.02em; margin:0 0 12px; font-weight:600; }
+  header.lab p { color:var(--sky); font-size:15.5px; margin:0; max-width:70ch; }
+
+  main { padding:26px 0 60px; }
+  .lay { display:grid; grid-template-columns:1fr 306px; gap:20px; align-items:start; }
+  @media (max-width:900px){ .lay { grid-template-columns:1fr; } }
+
+  .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; }
+  .seg { display:inline-flex; border:2px solid var(--line-dark); border-radius:8px; overflow:hidden; }
+  .seg button { font:inherit; font-size:13.5px; padding:7px 14px; border:0; background:#fff; cursor:pointer;
+    color:var(--ink); border-right:1px solid var(--line); }
+  .seg button:last-child { border-right:0; }
+  .seg button[aria-pressed="true"] { background:var(--navy); color:#f2f9ff; font-weight:600; }
+  .btn { font:inherit; font-size:13.5px; padding:7px 14px; border-radius:7px; border:2px solid var(--line-dark);
+    background:#fff; cursor:pointer; color:var(--ink); }
+  .btn:hover { border-color:var(--navy); background:#eef5fa; }
+  .btn.amber { background:var(--amber); border-color:var(--amber-edge); color:var(--amber-ink); font-weight:600; }
+  .btn.amber:hover { background:#ffe08a; }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .chk { display:inline-flex; align-items:center; gap:7px; font-size:13.5px; color:var(--muted); cursor:pointer;
+    padding:7px 4px; user-select:none; }
+
+  .stage { background:var(--navy); border-radius:10px; overflow:hidden; border:2px solid var(--navy-deep);
+    position:relative; touch-action:none; }
+  .stage svg { display:block; width:100%; height:auto; }
+  .hint { position:absolute; left:12px; bottom:10px; font-family:"IBM Plex Mono",monospace; font-size:11px;
+    color:var(--sky); opacity:.85; pointer-events:none; }
+
+  .panel { border:2px solid var(--line); border-radius:10px; background:#fff; padding:16px 18px; }
+  .panel + .panel { margin-top:14px; }
+  .panel h2 { font-size:14px; margin:0 0 10px; letter-spacing:-0.01em; }
+  .stat { display:flex; justify-content:space-between; gap:10px; font-size:13.5px; padding:5px 0;
+    border-bottom:1px dashed var(--line); }
+  .stat:last-child { border-bottom:0; }
+  .stat span:first-child { color:var(--muted); }
+  .stat span:last-child { font-family:"IBM Plex Mono",monospace; font-weight:500; }
+  .v-good { color:var(--good); }
+  .v-bad  { color:var(--bad); }
+  .joints { margin:8px 0 0; padding:0; list-style:none; font-family:"IBM Plex Mono",monospace; font-size:12px; }
+  .joints li { display:flex; justify-content:space-between; gap:8px; padding:3px 0; color:var(--muted); }
+  .note { font-size:12.5px; color:var(--muted); margin:10px 0 0; }
+  .presetrow { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .presetrow button { font:inherit; font-size:12px; padding:5px 10px; border-radius:6px; border:1px solid var(--line-dark);
+    background:#fff; cursor:pointer; }
+  .presetrow button:hover { background:#eef5fa; border-color:var(--navy); }
+  footer { border-top:2px solid var(--line); padding:20px 0 40px; font-size:13px; color:var(--muted); }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); margin-top:10px; }
+  .legend i { display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+</style>
+</head>
+<body>
+
+<nav><div class="wrap navrow">
+  <a class="wordmark" href="/">
+    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0e3a5c"/><rect x="6" y="6" width="20" height="20" rx="2" fill="none" stroke="#bfe0f5" stroke-width="1.6"/><rect x="17" y="10" width="5" height="4" fill="none" stroke="#ffd66b" stroke-width="1.6"/></svg>
+    RosterHelper
+  </a>
+  <div class="navlinks"><a href="/">Home</a><a href="/app/">Open the app</a></div>
+</div></nav>
+
+<header class="lab"><div class="wrap">
+  <p class="overline">GEOMETRY SANDBOX</p>
+  <h1>Desk shape lab</h1>
+  <p>Drag desks together and watch them mate. The app's <strong>Unique shape</strong> has two exactly congruent
+  curved edges (chord 115.004, bulge 40.002 on both), so all nine of its mates lock flush. The
+  <strong>real MooreCo Hierarchy Shapes</strong> outline, traced from page 3 of the manufacturer's spec
+  drawing, has no congruent pair at all — its closest match is off by 4.7% — so every arrangement either
+  overlaps or gapes. Joint readings show how much edge is <em>actually touching</em>, not the nearest
+  point, because two desks can kiss at a corner while the mated edges hang wide open.</p>
+</div></header>
+
+<main class="wrap">
+<div class="lay">
+  <div>
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Desk shape">
+        <button id="sh-kite" aria-pressed="true">Unique shape</button>
+        <button id="sh-real" aria-pressed="false">Real MooreCo</button>
+      </div>
+      <button class="btn amber" id="add">Add desk</button>
+      <button class="btn" id="rotL" title="Rotate selected left">⟲ 15°</button>
+      <button class="btn" id="rotR" title="Rotate selected right">⟳ 15°</button>
+      <button class="btn" id="del">Remove</button>
+      <button class="btn" id="reset">Reset</button>
+      <label class="chk"><input type="checkbox" id="snap" checked> Snap to mates</label>
+      <label class="chk"><input type="checkbox" id="ghosts" checked> Show mate targets</label>
+      <label class="chk"><input type="checkbox" id="overlay"> Overlay other shape</label>
+    </div>
+
+    <div class="stage" id="stage">
+      <svg id="svg" viewBox="0 0 900 560" aria-label="Desk arrangement canvas">
+        <defs>
+          <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M30,0 L0,0 L0,30" fill="none" stroke="#1c4f75" stroke-width="1"/>
+          </pattern>
+          <pattern id="grid5" width="150" height="150" patternUnits="userSpaceOnUse">
+            <path d="M150,0 L0,0 L0,150" fill="none" stroke="#265f89" stroke-width="1.4"/>
+          </pattern>
+        </defs>
+        <rect width="900" height="560" fill="url(#grid)"/>
+        <rect width="900" height="560" fill="url(#grid5)"/>
+        <g id="ghostLayer"></g>
+        <g id="deskLayer"></g>
+        <g id="annoLayer"></g>
+      </svg>
+      <div class="hint">drag to move · click to select · ⟲ ⟳ or [ ] to rotate · Delete to remove</div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#bfe0f5"></i>desk</span>
+      <span><i style="background:#ffd66b"></i>selected</span>
+      <span><i style="background:#d8543f"></i>overlapping</span>
+      <span><i style="background:#2f8f5b"></i>flush joint</span>
+    </div>
+  </div>
+
+  <aside>
+    <div class="panel">
+      <h2>Live measurements</h2>
+      <div class="stat"><span>Desks</span><span id="m-count">1</span></div>
+      <div class="stat"><span>Overlapping pairs</span><span id="m-over">0</span></div>
+      <div class="stat"><span>Footprint</span><span id="m-bbox">—</span></div>
+      <div class="stat"><span>Packing density</span><span id="m-fill">—</span></div>
+      <h2 style="margin-top:14px">Joints</h2>
+      <ul class="joints" id="m-joints"><li><span>no contacts yet</span></li></ul>
+      <p class="note" id="m-note"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Mating poses</h2>
+      <p class="note" style="margin-top:0" id="poseNote"></p>
+      <div class="presetrow" id="poseList"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Load a 4-desk pod</h2>
+      <p class="note" style="margin-top:0">Pre-solved arrangements with no boundary overlap.</p>
+      <div class="presetrow" id="presets"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Real dimensions</h2>
+      <div class="stat"><span>Standard Shapes desk</span><span>32.2″ × 25.8″</span></div>
+      <div class="stat"><span>Large Shapes desk</span><span>37.1″ × 29.5″</span></div>
+      <div class="stat"><span>Top thickness</span><span>1.25″</span></div>
+      <div class="stat"><span>Height range</span><span>22″–32″</span></div>
+      <p class="note">MooreCo spec sheet Rev 04/27/22. The drawn outline here is traced from the vector artwork
+      on page 3 of that sheet, which measures 32.2″ × 26.3″.</p>
+    </div>
+  </aside>
+</div>
+</main>
+
+<footer><div class="wrap">
+  An internal geometry sandbox for RosterHelper's desk shapes. <a href="/">Back to the site</a>.
+</div></footer>
+
+<script>
+const DATA = {"unitInches":0.26079,"kite":{"path":"M64,3 L12,40 L4,103 Q61.85,63.5 119,104 Q126.56,34.24 64,3 Z","poly":"M64.00,3.00 L12.00,40.00 L4.00,103.00 L8.45,100.08 L12.90,97.40 L17.34,94.95 L21.78,92.74 L26.22,90.77 L30.66,89.03 L35.10,87.53 L39.53,86.27 L43.97,85.24 L48.40,84.45 L52.82,83.90 L57.25,83.58 L61.67,83.50 L66.10,83.66 L70.52,84.05 L74.93,84.68 L79.35,85.55 L83.76,86.65 L88.18,87.99 L92.59,89.57 L96.99,91.38 L101.40,93.43 L105.80,95.72 L110.20,98.24 L114.60,101.00 L119.00,104.00 L119.48,98.69 L119.75,93.50 L119.81,88.41 L119.67,83.45 L119.31,78.59 L118.76,73.85 L117.99,69.23 L117.01,64.72 L115.83,60.32 L114.44,56.04 L112.85,51.87 L111.04,47.81 L109.03,43.87 L106.81,40.04 L104.38,36.33 L101.75,32.73 L98.91,29.24 L95.86,25.87 L92.60,22.61 L89.14,19.47 L85.47,16.44 L81.59,13.52 L77.50,10.72 L73.21,8.03 L68.71,5.46 Z","poses":[{"d":90.0,"at":[64,-9],"own":[64,-9],"kind":"exact","name":"apex +90"},{"d":270.0,"at":[64,-9],"own":[64,-9],"kind":"exact","name":"apex +270"},{"d":180.0,"at":[64,-9],"own":[64,-9],"kind":"exact","name":"apex +180"},{"d":299.06,"at":[61.675,83.5],"own":[109.03,43.87],"kind":"exact","name":"curve nest"},{"d":60.94,"at":[109.03,43.87],"own":[61.675,83.5],"kind":"exact","name":"curve nest"},{"d":180.0,"at":[38,21.5],"own":[38,21.5],"kind":"exact","name":"upper edge"},{"d":180.0,"at":[8,71.5],"own":[8,71.5],"kind":"exact","name":"lower edge"},{"d":227.4,"at":[38,21.5],"own":[8,71.5],"kind":"exact","name":"edge cross"},{"d":132.6,"at":[8,71.5],"own":[38,21.5],"kind":"exact","name":"edge cross"}],"label":"Unique shape (app)","dims":[115.82,101.0]},"real":{"path":"M4.26,93.25 L4.05,89.22 L4.00,85.14 L4.09,81.06 L4.34,76.93 L4.78,72.77 L5.37,68.65 L6.15,64.48 L7.10,60.35 L8.17,56.28 L9.45,52.23 L10.92,48.24 L12.50,44.29 L14.27,40.37 L16.20,36.59 L18.26,32.91 L20.46,29.25 L22.82,25.77 L25.31,22.33 L27.90,19.06 L30.59,15.89 L33.42,12.88 L36.35,10.00 L39.31,7.21 L42.41,4.60 L43.01,4.16 L43.61,3.82 L44.30,3.52 L45.03,3.26 L45.72,3.09 L46.49,3.00 L47.18,3.00 L47.90,3.09 L51.94,3.73 L55.94,4.50 L59.93,5.49 L63.97,6.66 L67.92,7.94 L71.88,9.39 L75.79,11.04 L79.62,12.84 L83.40,14.82 L87.08,16.92 L90.74,19.20 L94.25,21.60 L97.71,24.18 L101.01,26.90 L104.18,29.71 L107.28,32.68 L110.20,35.73 L113.04,38.92 L115.66,42.14 L118.19,45.49 L120.55,48.93 L122.75,52.40 L124.81,55.93 L126.69,59.54 L127.04,60.35 L127.30,61.17 L127.43,62.06 L127.47,62.97 L127.38,63.87 L127.18,64.77 L126.87,65.60 L126.48,66.37 L124.38,70.10 L122.39,73.93 L120.59,77.84 L118.97,81.84 L117.45,85.91 L116.17,90.00 L115.01,94.16 L114.06,98.33 L113.86,99.11 L113.55,99.84 L113.16,100.57 L112.70,101.26 L112.17,101.85 L111.59,102.42 L110.93,102.89 L110.20,103.27 L109.51,103.57 L108.74,103.79 L107.93,103.96 L107.11,104.00 L106.29,103.96 L105.48,103.79 L104.71,103.57 L103.98,103.27 L99.97,101.41 L95.90,99.75 L91.73,98.24 L87.48,96.91 L83.13,95.75 L78.71,94.77 L74.28,93.95 L69.77,93.34 L65.22,92.96 L60.66,92.75 L56.12,92.70 L51.56,92.88 L47.05,93.25 L42.58,93.83 L38.12,94.56 L33.73,95.50 L29.38,96.62 L25.14,97.90 L20.97,99.35 L16.89,101.00 L15.90,101.33 L14.87,101.60 L13.76,101.68 L12.68,101.68 L11.61,101.56 L10.53,101.26 L9.54,100.86 L8.60,100.34 L7.74,99.75 L6.93,99.06 L6.18,98.24 L5.60,97.34 L5.07,96.35 L4.69,95.36 L4.43,94.29 Z","poly":"M4.26,93.25 L4.05,89.22 L4.00,85.14 L4.09,81.06 L4.34,76.93 L4.78,72.77 L5.37,68.65 L6.15,64.48 L7.10,60.35 L8.17,56.28 L9.45,52.23 L10.92,48.24 L12.50,44.29 L14.27,40.37 L16.20,36.59 L18.26,32.91 L20.46,29.25 L22.82,25.77 L25.31,22.33 L27.90,19.06 L30.59,15.89 L33.42,12.88 L36.35,10.00 L39.31,7.21 L42.41,4.60 L43.01,4.16 L43.61,3.82 L44.30,3.52 L45.03,3.26 L45.72,3.09 L46.49,3.00 L47.18,3.00 L47.90,3.09 L51.94,3.73 L55.94,4.50 L59.93,5.49 L63.97,6.66 L67.92,7.94 L71.88,9.39 L75.79,11.04 L79.62,12.84 L83.40,14.82 L87.08,16.92 L90.74,19.20 L94.25,21.60 L97.71,24.18 L101.01,26.90 L104.18,29.71 L107.28,32.68 L110.20,35.73 L113.04,38.92 L115.66,42.14 L118.19,45.49 L120.55,48.93 L122.75,52.40 L124.81,55.93 L126.69,59.54 L127.04,60.35 L127.30,61.17 L127.43,62.06 L127.47,62.97 L127.38,63.87 L127.18,64.77 L126.87,65.60 L126.48,66.37 L124.38,70.10 L122.39,73.93 L120.59,77.84 L118.97,81.84 L117.45,85.91 L116.17,90.00 L115.01,94.16 L114.06,98.33 L113.86,99.11 L113.55,99.84 L113.16,100.57 L112.70,101.26 L112.17,101.85 L111.59,102.42 L110.93,102.89 L110.20,103.27 L109.51,103.57 L108.74,103.79 L107.93,103.96 L107.11,104.00 L106.29,103.96 L105.48,103.79 L104.71,103.57 L103.98,103.27 L99.97,101.41 L95.90,99.75 L91.73,98.24 L87.48,96.91 L83.13,95.75 L78.71,94.77 L74.28,93.95 L69.77,93.34 L65.22,92.96 L60.66,92.75 L56.12,92.70 L51.56,92.88 L47.05,93.25 L42.58,93.83 L38.12,94.56 L33.73,95.50 L29.38,96.62 L25.14,97.90 L20.97,99.35 L16.89,101.00 L15.90,101.33 L14.87,101.60 L13.76,101.68 L12.68,101.68 L11.61,101.56 L10.53,101.26 L9.54,100.86 L8.60,100.34 L7.74,99.75 L6.93,99.06 L6.18,98.24 L5.60,97.34 L5.07,96.35 L4.69,95.36 L4.43,94.29 Z","poses":[{"d":325.35,"at":[59.358,102.778],"own":[86.961,32.532],"kind":"curve","name":"scoop \u2190 sweep"},{"d":34.65,"at":[86.961,32.532],"own":[59.358,102.778],"kind":"curve","name":"sweep \u2190 scoop"},{"d":180.0,"at":[119.509,82.245],"own":[119.509,82.245],"kind":"approx","name":"facet flip"}],"label":"Real MooreCo outline","dims":[123.47,101.0]}};
+
+/* ---------- geometry helpers ---------- */
+const rad = d => d * Math.PI / 180;
+function rot(a, p) { const c = Math.cos(a), s = Math.sin(a); return [p[0]*c - p[1]*s, p[0]*s + p[1]*c]; }
+function toWorld(t, p) { const q = rot(rad(t.r), p); return [q[0] + t.x, q[1] + t.y]; }
+function toLocal(t, p) { const q = rot(-rad(t.r), [p[0]-t.x, p[1]-t.y]); return q; }
+
+function parsePoly(d) {
+  return d.replace(/^M/, "").replace(/Z$/, "").trim().split(/\s*L\s*/)
+          .map(s => s.split(",").map(Number));
+}
+function pip(pt, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > pt[1]) !== (yj > pt[1]) &&
+        pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+function segDist(p, a, b) {
+  const vx = b[0]-a[0], vy = b[1]-a[1];
+  const t = Math.max(0, Math.min(1, ((p[0]-a[0])*vx + (p[1]-a[1])*vy) / (vx*vx + vy*vy || 1e-9)));
+  return Math.hypot(p[0]-a[0]-t*vx, p[1]-a[1]-t*vy);
+}
+/* How much of A's outline runs within `tol` of B's outline.
+   A minimum-distance test is useless here: two desks that merely kiss at one
+   point read as "0.00 gap" even though the mated edges gape open. Measuring the
+   shared LENGTH separates a real flush joint from a point touch. */
+function contactLen(A, B, tol) {
+  let len = 0;
+  for (let i = 0; i < A.length; i++) {
+    const a = A[i], b = A[(i + 1) % A.length];
+    const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    let d = Infinity;
+    for (let k = 0; k < B.length; k++) d = Math.min(d, segDist(mid, B[k], B[(k + 1) % B.length]));
+    if (d < tol) len += Math.hypot(b[0] - a[0], b[1] - a[1]);
+  }
+  return len;
+}
+const TOL_TIGHT = 0.6, TOL_NEAR = 3.0;   // units; 1 unit ≈ 0.26"
+function polyArea(poly) {
+  let s = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const [x1,y1] = poly[i], [x2,y2] = poly[(i+1)%poly.length];
+    s += x1*y2 - x2*y1;
+  }
+  return Math.abs(s) / 2;
+}
+/* interior probes, inset from the boundary so a flush mate never reads as overlap */
+function probes(poly, step = 5, inset = 1.6) {
+  const xs = poly.map(p=>p[0]), ys = poly.map(p=>p[1]);
+  const out = [];
+  for (let x = Math.min(...xs); x < Math.max(...xs); x += step)
+    for (let y = Math.min(...ys); y < Math.max(...ys); y += step) {
+      const p = [x, y];
+      if (!pip(p, poly)) continue;
+      let d = Infinity;
+      for (let i = 0; i < poly.length; i++) d = Math.min(d, segDist(p, poly[i], poly[(i+1)%poly.length]));
+      if (d > inset) out.push(p);
+    }
+  return out;
+}
+
+/* ---------- state ---------- */
+const SHAPES = {};
+for (const k of ["kite", "real"]) {
+  const s = DATA[k];
+  SHAPES[k] = { ...s, pts: parsePoly(s.poly) };
+  SHAPES[k].probes = probes(SHAPES[k].pts);
+  SHAPES[k].area = polyArea(SHAPES[k].pts);
+}
+const UNIT = DATA.unitInches;
+let shape = "kite";
+let desks = [];
+let sel = 0;
+let uid = 1;
+
+const svg = document.getElementById("svg");
+const deskLayer = document.getElementById("deskLayer");
+const ghostLayer = document.getElementById("ghostLayer");
+const annoLayer = document.getElementById("annoLayer");
+
+function S() { return SHAPES[shape]; }
+function reset() {
+  desks = [{ id: uid++, x: 380, y: 210, r: 0 }];
+  sel = 0;
+  render();
+}
+
+/* ---------- mating ---------- */
+function attach(host, pose) {
+  const r = (host.r + pose.d) % 360;
+  const a = toWorld(host, pose.at);
+  const o = rot(rad(r), pose.own);
+  return { x: a[0] - o[0], y: a[1] - o[1], r };
+}
+function candidates(exclude) {
+  const out = [];
+  desks.forEach((h, hi) => {
+    if (hi === exclude) return;
+    S().poses.forEach((p, pi) => out.push({ ...attach(h, p), host: hi, pose: pi, kind: p.kind, name: p.name }));
+  });
+  return out;
+}
+
+/* ---------- rendering ---------- */
+function worldPts(t) { return S().pts.map(p => toWorld(t, p)); }
+
+function overlapsOf() {
+  const wp = desks.map(worldPts);
+  const wprobe = desks.map(t => S().probes.map(p => toWorld(t, p)));
+  const bad = new Set(); const pairs = [];
+  for (let i = 0; i < desks.length; i++)
+    for (let j = i + 1; j < desks.length; j++) {
+      const hit = wprobe[i].some(p => pip(p, wp[j])) || wprobe[j].some(p => pip(p, wp[i]));
+      if (hit) { bad.add(i); bad.add(j); pairs.push({ i, j, over: true }); continue; }
+      const near = contactLen(wp[i], wp[j], TOL_NEAR);
+      if (near < 20) continue;   // grazing corners aren't a joint; a real mate runs 40u+
+      const tight = contactLen(wp[i], wp[j], TOL_TIGHT);
+      pairs.push({ i, j, over: false, tight, near, flush: tight / near > 0.9 });
+    }
+  return { bad, pairs, wp };
+}
+
+function render() {
+  const { bad, pairs, wp } = overlapsOf();
+  deskLayer.innerHTML = "";
+  desks.forEach((t, i) => {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("transform", `translate(${t.x} ${t.y}) rotate(${t.r})`);
+    g.dataset.idx = i;
+    g.style.cursor = "grab";
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", S().path);
+    const isSel = i === sel, isBad = bad.has(i);
+    p.setAttribute("fill", isBad ? "rgba(216,84,63,0.34)" : isSel ? "rgba(255,214,107,0.30)" : "rgba(191,224,245,0.20)");
+    p.setAttribute("stroke", isBad ? "#d8543f" : isSel ? "#ffd66b" : "#bfe0f5");
+    p.setAttribute("stroke-width", isSel ? 3 : 2.2);
+    p.setAttribute("stroke-linejoin", "round");
+    g.appendChild(p);
+    if (document.getElementById("overlay").checked) {
+      const other = shape === "kite" ? SHAPES.real : SHAPES.kite;
+      const q = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      q.setAttribute("d", other.path);
+      q.setAttribute("fill", "none");
+      q.setAttribute("stroke", "#ffd66b");
+      q.setAttribute("stroke-width", "1.6");
+      q.setAttribute("stroke-dasharray", "5 4");
+      q.setAttribute("opacity", ".75");
+      g.appendChild(q);
+    }
+    deskLayer.appendChild(g);
+  });
+
+  annoLayer.innerHTML = "";
+  pairs.filter(p => !p.over).forEach(p => {
+    const a = centroid(wp[p.i]), b = centroid(wp[p.j]);
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", mx); c.setAttribute("cy", my); c.setAttribute("r", 4.5);
+    c.setAttribute("fill", p.flush ? "#2f8f5b" : "#ffd66b");
+    c.setAttribute("stroke", "#0a2e4a"); c.setAttribute("stroke-width", "1.4");
+    annoLayer.appendChild(c);
+    const tx = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    tx.setAttribute("x", mx + 8); tx.setAttribute("y", my + 4);
+    tx.setAttribute("fill", p.flush ? "#8fe0b4" : "#ffd66b");
+    tx.setAttribute("font-family", "IBM Plex Mono, monospace");
+    tx.setAttribute("font-size", "12");
+    tx.textContent = p.flush
+      ? (p.tight * UNIT).toFixed(1) + '″ flush'
+      : (p.tight * UNIT).toFixed(1) + '/' + (p.near * UNIT).toFixed(1) + '″';
+    annoLayer.appendChild(tx);
+  });
+
+  stats(bad, pairs, wp);
+}
+function centroid(pts) {
+  let x = 0, y = 0; for (const p of pts) { x += p[0]; y += p[1]; }
+  return [x / pts.length, y / pts.length];
+}
+
+function stats(bad, pairs, wp) {
+  document.getElementById("m-count").textContent = desks.length;
+  const ov = pairs.filter(p => p.over).length;
+  const oe = document.getElementById("m-over");
+  oe.textContent = ov; oe.className = ov ? "v-bad" : "v-good";
+  const all = wp.flat();
+  if (all.length) {
+    const xs = all.map(p=>p[0]), ys = all.map(p=>p[1]);
+    const w = Math.max(...xs)-Math.min(...xs), h = Math.max(...ys)-Math.min(...ys);
+    document.getElementById("m-bbox").textContent =
+      (w*UNIT).toFixed(1) + '" × ' + (h*UNIT).toFixed(1) + '"';
+    document.getElementById("m-fill").textContent =
+      (desks.length * S().area / (w*h) * 100).toFixed(1) + "%";
+  }
+  const ul = document.getElementById("m-joints");
+  if (!pairs.length) ul.innerHTML = "<li><span>no contacts yet</span></li>";
+  else ul.innerHTML = pairs.map(p => {
+    const tag = `#${p.i+1}–#${p.j+1}`;
+    if (p.over) return `<li><span>${tag}</span><span class="v-bad">overlap</span></li>`;
+    if (p.flush) return `<li><span>${tag}</span><span class="v-good">${(p.tight*UNIT).toFixed(1)}″ flush</span></li>`;
+    return `<li><span>${tag}</span><span>${(p.tight*UNIT).toFixed(1)}″ of ${(p.near*UNIT).toFixed(1)}″</span></li>`;
+  }).join("");
+  const loose = pairs.filter(p => !p.over && !p.flush).length;
+  document.getElementById("m-note").textContent = shape === "kite"
+    ? "Joints show the length of edge actually touching. All 9 kite mates close along their full shared edge."
+    : "“3.7″ of 27.4″” means the edges run alongside for 27.4″ but only touch over 3.7″ — the mate is approximate, "
+      + "so the joint gapes." + (loose ? "" : " Drag two desks together to see it.");
+}
+
+/* ---------- dragging ---------- */
+let drag = null;
+function svgPt(evt) {
+  const r = svg.getBoundingClientRect();
+  const vb = svg.viewBox.baseVal;
+  return [(evt.clientX - r.left) / r.width * vb.width, (evt.clientY - r.top) / r.height * vb.height];
+}
+svg.addEventListener("pointerdown", e => {
+  const g = e.target.closest("g[data-idx]");
+  if (!g) return;
+  const i = +g.dataset.idx;
+  sel = i;
+  const p = svgPt(e);
+  drag = { i, dx: desks[i].x - p[0], dy: desks[i].y - p[1] };
+  svg.setPointerCapture(e.pointerId);
+  render();
+});
+svg.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const p = svgPt(e);
+  const d = desks[drag.i];
+  d.x = p[0] + drag.dx; d.y = p[1] + drag.dy;
+
+  ghostLayer.innerHTML = "";
+  if (document.getElementById("ghosts").checked) {
+    candidates(drag.i).forEach(c => {
+      const near = Math.hypot(c.x - d.x, c.y - d.y) < 150;
+      if (!near) return;
+      const gp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      gp.setAttribute("d", S().path);
+      gp.setAttribute("transform", `translate(${c.x} ${c.y}) rotate(${c.r})`);
+      gp.setAttribute("fill", "none");
+      gp.setAttribute("stroke", c.kind === "exact" ? "#2f8f5b" : "#e3b93f");
+      gp.setAttribute("stroke-width", "1.6");
+      gp.setAttribute("stroke-dasharray", "4 4");
+      gp.setAttribute("opacity", ".7");
+      ghostLayer.appendChild(gp);
+    });
+  }
+  render();
+});
+svg.addEventListener("pointerup", e => {
+  if (!drag) return;
+  const d = desks[drag.i];
+  if (document.getElementById("snap").checked) {
+    let best = null, bd = 34;
+    for (const c of candidates(drag.i)) {
+      const dist = Math.hypot(c.x - d.x, c.y - d.y);
+      if (dist < bd) { bd = dist; best = c; }
+    }
+    if (best) { d.x = best.x; d.y = best.y; d.r = best.r; }
+  }
+  drag = null;
+  ghostLayer.innerHTML = "";
+  render();
+});
+
+/* ---------- controls ---------- */
+document.getElementById("add").onclick = () => {
+  const base = desks[sel] || { x: 380, y: 210, r: 0 };
+  desks.push({ id: uid++, x: base.x + 150, y: base.y + 40, r: 0 });
+  sel = desks.length - 1;
+  render();
+};
+document.getElementById("del").onclick = () => {
+  if (desks.length <= 1) return;
+  desks.splice(sel, 1); sel = Math.max(0, sel - 1); render();
+};
+document.getElementById("reset").onclick = reset;
+document.getElementById("rotL").onclick = () => { desks[sel].r = (desks[sel].r - 15 + 360) % 360; render(); };
+document.getElementById("rotR").onclick = () => { desks[sel].r = (desks[sel].r + 15) % 360; render(); };
+document.getElementById("overlay").onchange = render;
+document.getElementById("ghosts").onchange = () => { ghostLayer.innerHTML = ""; };
+addEventListener("keydown", e => {
+  if (e.key === "[") { desks[sel].r = (desks[sel].r - 15 + 360) % 360; render(); }
+  if (e.key === "]") { desks[sel].r = (desks[sel].r + 15) % 360; render(); }
+  if (e.key === "Delete" || e.key === "Backspace") { document.getElementById("del").click(); }
+});
+
+function setShape(k) {
+  shape = k;
+  document.getElementById("sh-kite").setAttribute("aria-pressed", k === "kite");
+  document.getElementById("sh-real").setAttribute("aria-pressed", k === "real");
+  buildPoseList(); buildPresets(); reset();
+}
+document.getElementById("sh-kite").onclick = () => setShape("kite");
+document.getElementById("sh-real").onclick = () => setShape("real");
+
+function buildPoseList() {
+  const el = document.getElementById("poseList");
+  el.innerHTML = "";
+  S().poses.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.textContent = p.name + (p.kind === "exact" ? " ✓" : " ≈");
+    b.title = p.kind === "exact" ? "closes flush" : "approximate — needs clearance";
+    b.onclick = () => {
+      const host = desks[sel];
+      const t = attach(host, p);
+      desks.push({ id: uid++, ...t });
+      sel = desks.length - 1;
+      render();
+    };
+    el.appendChild(b);
+  });
+  document.getElementById("poseNote").textContent = shape === "kite"
+    ? "9 poses, all exact. Click one to attach a desk to the selected desk."
+    : "3 poses, none exact. The two curve mates overlap by ≈0.52″ if pushed fully home. Even the facet "
+      + "flip only touches at its midpoint — that edge is bowed 0.9u, so it gapes ≈0.47″ at both ends.";
+}
+
+/* four-desk pods, pre-solved (relative to desk 1) */
+const PODS = {"kite":[[[0.0,0.0,0.0],[-29.63,157.5,299.06],[152.06,-50.6,60.94],[93.65,259.9,238.12]],[[0.0,0.0,0.0],[55.0,-73.0,90.0],[12.0,3.0,270.0],[-38.6,-149.06,330.94]],[[0.0,0.0,0.0],[55.0,-73.0,90.0],[12.0,3.0,270.0],[67.0,-70.0,180.0]],[[0.0,0.0,0.0],[-29.63,157.5,299.06],[16.0,143.0,180.0],[32.14,202.36,166.46]]],"real":[[[0.0,0.0,0.0],[-31.15,127.4,325.35],[259.0,126.82,145.35],[227.85,254.22,180.0]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[98.06,-87.09,34.65],[15.66,249.92,290.7]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[239.02,164.49,180.0],[270.17,37.09,145.35]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[98.06,-87.09,34.65],[259.0,126.82,145.35]]]};
+function buildPresets() {
+  const el = document.getElementById("presets");
+  el.innerHTML = "";
+  PODS[shape].forEach((cfg, i) => {
+    const b = document.createElement("button");
+    b.textContent = "Pod " + (i + 1);
+    b.onclick = () => {
+      desks = cfg.map(c => ({ id: uid++, x: c[0], y: c[1], r: c[2] }));
+      const all = desks.flatMap(worldPts);
+      const xs = all.map(p => p[0]), ys = all.map(p => p[1]);
+      const dx = 450 - (Math.min(...xs) + Math.max(...xs)) / 2;
+      const dy = 280 - (Math.min(...ys) + Math.max(...ys)) / 2;
+      desks.forEach(d => { d.x += dx; d.y += dy; });
+      sel = 0; render();
+    };
+    el.appendChild(b);
+  });
+}
+
+buildPoseList(); buildPresets(); reset();
+</script>
+</body>
+</html>
