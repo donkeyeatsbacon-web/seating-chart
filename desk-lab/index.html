@@ -516,20 +516,43 @@ function buildPoseList() {
 
 /* four-desk pods, pre-solved (relative to desk 1) */
 const PODS = {"kite":[[[0.0,0.0,0.0],[-29.63,157.5,299.06],[152.06,-50.6,60.94],[93.65,259.9,238.12]],[[0.0,0.0,0.0],[55.0,-73.0,90.0],[12.0,3.0,270.0],[-38.6,-149.06,330.94]],[[0.0,0.0,0.0],[55.0,-73.0,90.0],[12.0,3.0,270.0],[67.0,-70.0,180.0]],[[0.0,0.0,0.0],[-29.63,157.5,299.06],[16.0,143.0,180.0],[32.14,202.36,166.46]]],"real":[[[0.0,0.0,0.0],[-31.15,127.4,325.35],[259.0,126.82,145.35],[227.85,254.22,180.0]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[98.06,-87.09,34.65],[15.66,249.92,290.7]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[239.02,164.49,180.0],[270.17,37.09,145.35]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[98.06,-87.09,34.65],[259.0,126.82,145.35]]]};
+function centerDesks() {
+  const all = desks.flatMap(worldPts);
+  const xs = all.map(p => p[0]), ys = all.map(p => p[1]);
+  const dx = 450 - (Math.min(...xs) + Math.max(...xs)) / 2;
+  const dy = 280 - (Math.min(...ys) + Math.max(...ys)) / 2;
+  desks.forEach(d => { d.x += dx; d.y += dy; });
+  sel = 0; render();
+}
+
+/* Four tops turned 90° apart via mate #0 (apex pivot), chained 3×.
+   NOT a flush pinwheel: APEX_PULL puts the pivot 12u outside the shape, and the
+   kite's apex is 118° (four-around-a-point needs 90°), so this leaves a ~6"
+   hole at the centre and ~1" wedges between neighbours. */
+function pinwheel() {
+  desks = [{ id: uid++, x: 0, y: 0, r: 0 }];
+  for (let i = 0; i < 3; i++) desks.push({ id: uid++, ...attach(desks[desks.length - 1], S().poses[0]) });
+  centerDesks();
+}
+
 function buildPresets() {
   const el = document.getElementById("presets");
   el.innerHTML = "";
+  if (shape === "kite") {
+    const p = document.createElement("button");
+    p.textContent = "Apex pinwheel ×4 (gaps)";
+    p.title = "Four desks at 90° about the apex pivot. The kite's apex is 118°, "
+            + "so they can't close — ~6\" hole at the centre, ~1\" between neighbours.";
+    p.style.cssText = "border-color:#e3b93f;color:#8a6a12;font-weight:600";
+    p.onclick = pinwheel;
+    el.appendChild(p);
+  }
   PODS[shape].forEach((cfg, i) => {
     const b = document.createElement("button");
     b.textContent = "Pod " + (i + 1);
     b.onclick = () => {
       desks = cfg.map(c => ({ id: uid++, x: c[0], y: c[1], r: c[2] }));
-      const all = desks.flatMap(worldPts);
-      const xs = all.map(p => p[0]), ys = all.map(p => p[1]);
-      const dx = 450 - (Math.min(...xs) + Math.max(...xs)) / 2;
-      const dy = 280 - (Math.min(...ys) + Math.max(...ys)) / 2;
-      desks.forEach(d => { d.x += dx; d.y += dy; });
-      sel = 0; render();
+      centerDesks();
     };
     el.appendChild(b);
   });
