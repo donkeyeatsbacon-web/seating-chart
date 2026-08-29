@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Design lab — RosterHelper</title>
+<link rel="icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&family=Caveat:wght@700&family=Fraunces:opsz,wght@9..144,600&family=Nunito:wght@800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:#eceae4; font-family:"IBM Plex Sans",system-ui,sans-serif; color:#1c1e24; }
+  .labbar { position:sticky; top:0; z-index:99; background:#1c1e24; color:#fff; padding:10px 18px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .labbar .lbl { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:0.12em; color:#9aa3b2; margin-right:4px; }
+  .chip { border:1.5px solid #4a5262; background:transparent; color:#cfd6e2; border-radius:999px; padding:5px 13px; font:inherit; font-size:12.5px; cursor:pointer; }
+  .chip.on { background:#ffd66b; border-color:#ffd66b; color:#3a2c05; font-weight:600; }
+  .secnote { max-width:1100px; margin:26px auto 10px; padding:0 20px; font-size:13px; color:#6b6f78; }
+  .frame { max-width:1100px; margin:0 auto 40px; border-radius:12px; overflow:hidden; border:1px solid #d5d2c8; }
+
+  /* ============ LANDING DEMO (themable slice of the real landing) ============ */
+  .L { --bg:#0e3a5c; --panelbg:#fbfbfa; --ink:#f6faff; --sub:#9fc6e3; --mono:"IBM Plex Mono",monospace;
+       --headfont:"IBM Plex Sans",sans-serif; --headsize:44px; --headweight:600; --headspacing:-0.02em;
+       --btnbg:#ffd66b; --btnink:#3a2c05; --btnborder:#e3b93f; --btnradius:6px;
+       --cardbg:#fff; --cardborder:#e3e1da; --cardink:#1c1e24; --cardmuted:#5c6270; --cardradius:10px; --cardbw:2px;
+       --tagbg:#e8f1f8; --tagink:#0e3a5c; --illline:#bfe0f5; --illhot:#ffd66b; --navink:#f2f9ff; }
+  .L .hero { background:var(--bg); padding:38px 34px 34px; position:relative; overflow:hidden; }
+  .L .gridlayer { position:absolute; inset:0; opacity:1; pointer-events:none; }
+  .L[data-theme="current"] .gridlayer { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cpath d='M28 0H0v28' fill='none' stroke='%231c4f75' stroke-width='1'/%3E%3C/svg%3E"); }
+  .L .heroin { position:relative; display:grid; grid-template-columns:1.05fr 0.95fr; gap:34px; align-items:center; }
+  .L .nav { position:relative; display:flex; justify-content:space-between; align-items:center; margin-bottom:26px; }
+  .L .wordmark { display:flex; align-items:center; gap:9px; font-weight:600; font-size:17px; color:var(--navink); }
+  .L .overline { font-family:var(--mono); font-size:12px; letter-spacing:0.14em; color:var(--sub); margin:0 0 12px; }
+  .L h1 { font-family:var(--headfont); font-size:var(--headsize); font-weight:var(--headweight); letter-spacing:var(--headspacing); line-height:1.08; margin:0 0 14px; color:var(--ink); }
+  .L .sub { font-size:15px; color:var(--sub); margin:0 0 20px; max-width:46ch; }
+  .L .cta { display:inline-block; background:var(--btnbg); color:var(--btnink); border:2px solid var(--btnborder); border-radius:var(--btnradius); padding:12px 24px; font-size:15px; font-weight:600; }
+  .L .note { font-size:12px; color:var(--sub); margin-left:12px; }
+  .L .sheet { border:2px solid var(--illline); border-radius:6px; padding:12px; background:rgba(0,0,0,0.12); }
+  .L .below { background:var(--panelbg); padding:26px 34px 34px; }
+  .L .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .L .card { background:var(--cardbg); border:var(--cardbw) solid var(--cardborder); border-radius:var(--cardradius); padding:14px 16px; color:var(--cardink); }
+  .L .card h3 { margin:0 0 5px; font-size:14px; }
+  .L .card p { margin:0; font-size:12.5px; color:var(--cardmuted); line-height:1.5; }
+  .L .tag { display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:0.1em; background:var(--tagbg); color:var(--tagink); border-radius:4px; padding:2px 7px; margin-bottom:8px; }
+  .L .hl { }
+  @media (max-width:760px){ .L .heroin{grid-template-columns:1fr} .L .cards{grid-template-columns:1fr} }
+
+  .L[data-theme="bigtype"] { --bg:#fffdf6; --panelbg:#fffdf6; --ink:#111; --sub:#55523f; --headfont:"Space Grotesk",sans-serif; --headsize:56px; --headweight:700; --headspacing:-0.03em; --btnbg:#111; --btnink:#fff; --btnborder:#111; --btnradius:999px; --navink:#111; --illline:#c9c4b2; --illhot:#ffe24a; --tagbg:#f1eeda; --tagink:#6b6547; --cardborder:#e6e2d2; }
+  .L[data-theme="bigtype"] .hl { background:#ffe24a; padding:0 8px; }
+  .L[data-theme="bigtype"] .sheet { background:#fff; border-color:#e6e2d2; }
+
+  .L[data-theme="chalkboard"] { --bg:#2e4a3b; --panelbg:#f6f3e7; --ink:#f6f3e7; --sub:#c9d6c4; --headfont:"Caveat",cursive; --headsize:64px; --headweight:700; --headspacing:0; --btnbg:#f6e7c8; --btnink:#4a3a1c; --btnborder:#dbc79b; --btnradius:6px; --navink:#f6f3e7; --illline:#dfe9d9; --illhot:#f4d06f; --cardbg:#fffdf4; --cardborder:#ded8c2; --tagbg:#ece5cd; --tagink:#5c4d26; }
+  .L[data-theme="chalkboard"] .hero { border-bottom:10px solid #8b5e3c; }
+
+  .L[data-theme="paperink"] { --bg:#fdfbf5; --panelbg:#fdfbf5; --ink:#1e2430; --sub:#6b7280; --headfont:"Fraunces",serif; --headsize:48px; --headweight:600; --headspacing:-0.01em; --btnbg:#b3402e; --btnink:#fff; --btnborder:#8f3021; --btnradius:4px; --navink:#1e2430; --illline:#9aa8b8; --illhot:#b3402e; --cardborder:#e3ddcc; --tagbg:#f3ead9; --tagink:#7a5e33; }
+  .L[data-theme="paperink"] .hero { background-image:repeating-linear-gradient(#fdfbf5 0px,#fdfbf5 27px,#dbe7f0 28px); }
+  .L[data-theme="paperink"] .hero:before { content:""; position:absolute; left:40px; top:0; bottom:0; width:2px; background:#e8a8a0; }
+  .L[data-theme="paperink"] .sub { font-family:var(--mono); font-size:13px; }
+  .L[data-theme="paperink"] .sheet { background:#fff; }
+
+  .L[data-theme="pastel"] { --bg:#f6f9ff; --panelbg:#f6f9ff; --ink:#2a3b5a; --sub:#5f6f8e; --headfont:"Nunito",sans-serif; --headsize:46px; --headweight:900; --headspacing:0; --btnbg:#5b8def; --btnink:#fff; --btnborder:#5b8def; --btnradius:999px; --navink:#2a3b5a; --illline:#b9cdea; --illhot:#5b8def; --cardradius:18px; --cardborder:#e2e9f6; --tagbg:#e3ecfd; --tagink:#274b8f; }
+  .L[data-theme="pastel"] .sheet { background:#fff; border-radius:20px; }
+
+  .L[data-theme="brutalist"] { --bg:#fff; --panelbg:#fff; --ink:#000; --sub:#333; --headfont:"Space Grotesk",sans-serif; --headsize:50px; --headweight:700; --headspacing:-0.02em; --btnbg:#ffd84d; --btnink:#000; --btnborder:#000; --btnradius:0; --navink:#000; --illline:#000; --illhot:#ff90b3; --cardradius:0; --cardbw:3px; --cardborder:#000; --tagbg:#7de2d1; --tagink:#0c4f42; }
+  .L[data-theme="brutalist"] .cta { border-width:3px; box-shadow:5px 5px 0 #000; }
+  .L[data-theme="brutalist"] .card { box-shadow:5px 5px 0 #000; }
+  .L[data-theme="brutalist"] .sheet { border:3px solid #000; box-shadow:6px 6px 0 #000; background:#fff; }
+
+  .L[data-theme="darkproj"] { --bg:#12151c; --panelbg:#171b24; --ink:#f2f5fa; --sub:#93a1b5; --btnbg:#57a9ff; --btnink:#0a1f36; --btnborder:#57a9ff; --navink:#e8ecf4; --illline:#4a5a75; --illhot:#57a9ff; --cardbg:#1a2130; --cardborder:#2c3547; --cardink:#dfe6f0; --cardmuted:#93a1b5; --tagbg:#1d3a5f; --tagink:#bfdcff; }
+  .L[data-theme="darkproj"] .sheet { background:#0f131b; }
+
+  .L[data-theme="stickers"] { --bg:#fff; --panelbg:#fff; --ink:#222; --sub:#5a5f6b; --headfont:"Nunito",sans-serif; --headsize:46px; --headweight:900; --headspacing:0; --btnbg:#222; --btnink:#fff; --btnborder:#222; --btnradius:999px; --navink:#222; --illline:#b9c2ce; --illhot:#e94f64; --cardradius:14px; --cardborder:#e8e6e0; --tagbg:#ffd84d; --tagink:#6b4d00; }
+  .L[data-theme="stickers"] .w1{color:#e94f64} .L[data-theme="stickers"] .w2{color:#2f9e6e} .L[data-theme="stickers"] .w3{color:#3c7fb1}
+  .L[data-theme="stickers"] .card { border:4px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,0.22); }
+  .L[data-theme="stickers"] .card:nth-child(1){ background:#fff3cd; transform:rotate(-1.2deg); }
+  .L[data-theme="stickers"] .card:nth-child(2){ background:#dff5ee; transform:rotate(0.8deg); }
+  .L[data-theme="stickers"] .card:nth-child(3){ background:#ffe3ea; transform:rotate(-0.6deg); }
+  .L[data-theme="stickers"] .sheet { transform:rotate(1deg); background:#fff; border:4px solid #fff; box-shadow:0 2px 10px rgba(0,0,0,0.2); }
+
+  .L[data-theme="gradient"] { --bg:linear-gradient(135deg,#4f46e5,#0ea5e9); --panelbg:#f6f8ff; --ink:#fff; --sub:#dbeafe; --btnbg:#fff; --btnink:#3730a3; --btnborder:#fff; --btnradius:8px; --navink:#fff; --illline:rgba(255,255,255,0.75); --illhot:#fde047; --tagbg:#e3e6fd; --tagink:#3730a3; --cardborder:#e3e4f2; }
+  .L[data-theme="gradient"] .hero { background:var(--bg); }
+  .L[data-theme="gradient"] .sheet { background:rgba(255,255,255,0.14); border-color:rgba(255,255,255,0.55); }
+
+  /* ============ APP DEMO ============ */
+  .A { --topbg:#0e3a5c; --topborder:#0a2e4a; --topink:#dcebf7; --tabon:#fbfbfa; --tabonink:#0e3a5c; --taboff:#3f6d94;
+       --pribg:#ffd66b; --priink:#3a2c05; --priborder:#e3b93f;
+       --sidebg:#fff; --sideink:#333; --sidelabel:#8a8f98; --sideborder:#e3e1da;
+       --canvas:#fbfbfa; --deskline:#9aa3ad; --deskfill:#fff; --deskname:#3a3f47; --meta:#5f7a92;
+       --ctrlborder:#c9cdd3; --density:1; font-size:13px; }
+  .A .win { display:grid; grid-template-rows:auto 1fr; height:520px; background:var(--canvas); }
+  .A .top { background:var(--topbg); border-bottom:2px solid var(--topborder); display:flex; align-items:center; gap:8px; padding:calc(9px*var(--density)) 14px; flex-wrap:wrap; }
+  .A .brand { display:flex; align-items:center; gap:8px; color:#f2f9ff; font-weight:600; font-size:14px; margin-right:6px; }
+  .A .tab { padding:5px 12px; border-radius:5px; font-size:12.5px; border:2px solid var(--taboff); color:var(--topink); }
+  .A .tab.on { background:var(--tabon); color:var(--tabonink); border-color:var(--tabon); }
+  .A .sp { flex:1; }
+  .A .b { padding:calc(6px*var(--density)) 12px; border-radius:5px; font-size:12.5px; border:2px solid var(--taboff); color:var(--topink); cursor:pointer; background:transparent; font-family:inherit; }
+  .A .b.pri { background:var(--pribg); color:var(--priink); border-color:var(--priborder); font-weight:600; }
+  .A .b.ghost { border-color:transparent; opacity:0.85; }
+  .A .body { display:grid; grid-template-columns:230px 1fr; min-height:0; }
+  .A .side { background:var(--sidebg); border-right:2px solid var(--sideborder); overflow:auto; }
+  .A .shead { background:#0e3a5c; color:#f2f9ff; padding:12px 14px; font-weight:600; font-size:14px; display:flex; gap:8px; align-items:center; }
+  .A .shead small { display:block; font-family:"IBM Plex Mono",monospace; font-weight:400; font-size:10.5px; color:#9fc6e3; }
+  .A .sec { padding:10px 14px; border-bottom:1px solid var(--sideborder); }
+  .A .seclbl { font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:0.1em; color:var(--sidelabel); margin-bottom:6px; }
+  .A .nm { font-size:12.5px; color:var(--sideink); line-height:1.75; }
+  .A .canvas { position:relative; overflow:hidden;
+    background-color:var(--canvas);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Cpath d='M22 0H0v22' fill='none' stroke='%23edf2f6' stroke-width='1'/%3E%3C/svg%3E"); }
+  .A .meta { position:absolute; right:12px; bottom:8px; font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:0.08em; color:var(--meta); text-transform:uppercase; }
+  .A .desk { position:absolute; width:104px; text-align:center; }
+  .A .desk svg { display:block; width:100%; height:auto; }
+  .A .desk .dn { position:absolute; left:50%; top:58%; transform:translate(-50%,-50%); font-size:11.5px; color:var(--deskname); font-weight:500; white-space:nowrap; }
+  .A .ribbon, .A .float, .A .rail, .A .sidecards { display:none; }
+
+  .A[data-app="drafting"] { --sidebg:#0e3a5c; --sideink:#dcebf7; --sidelabel:#9fc6e3; --sideborder:#0a2e4a; }
+  .A[data-app="drafting"] .canvas { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Cpath d='M22 0H0v22' fill='none' stroke='%23dde7ee' stroke-width='1'/%3E%3C/svg%3E"); background-color:#fdfdfc; }
+
+  .A[data-app="ribbon"] .top { display:none; }
+  .A[data-app="ribbon"] .ribbon { display:flex; background:#fff; border-bottom:1px solid #e3e1da; padding:8px 14px; gap:0; }
+  .A .rgrp { padding:0 14px; border-right:1px solid #eee; }
+  .A .rgrp:last-child { border-right:none; }
+  .A .rrow { display:flex; gap:6px; }
+  .A .rb { border:1.5px solid var(--ctrlborder); border-radius:4px; font-size:11px; padding:4px 9px; color:#444; background:#fff; font-family:inherit; }
+  .A .rb.pri { background:#0e3a5c; color:#fff; border-color:#0e3a5c; }
+  .A .rlbl { font-family:"IBM Plex Mono",monospace; font-size:9.5px; letter-spacing:0.1em; color:#98a0aa; text-align:center; margin-top:5px; }
+
+  .A[data-app="canvasfirst"] .top, .A[data-app="canvasfirst"] .side { display:none; }
+  .A[data-app="canvasfirst"] .body { grid-template-columns:1fr; }
+  .A[data-app="canvasfirst"] .float { display:flex; position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:5; background:#fff; border:1px solid #d9dce1; border-radius:999px; padding:6px 8px; gap:4px; box-shadow:0 2px 12px rgba(20,30,40,0.10); }
+  .A .fb { border:none; background:transparent; border-radius:999px; font-size:12px; padding:5px 12px; color:#444; font-family:inherit; }
+  .A .fb.pri { background:#0e3a5c; color:#fff; }
+  .A[data-app="canvasfirst"] .rail { display:flex; position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:5; background:#fff; border:1px solid #d9dce1; border-radius:10px; padding:8px; flex-direction:column; gap:10px; color:#5a626d; font-size:15px; text-align:center; }
+
+  .A[data-app="density"] { --density:0.66; font-size:12px; }
+  .A[data-app="density"] .top { background:#fff; border-bottom:1px solid #ececea; }
+  .A[data-app="density"] .brand { color:#1c1e24; font-size:12px; }
+  .A[data-app="density"] .tab { border:1px solid #d5d7db; color:#444; font-size:10.5px; padding:3px 9px; border-radius:3px; }
+  .A[data-app="density"] .tab.on { background:#eef2f6; color:#0e3a5c; border-color:#c5d2dd; }
+  .A[data-app="density"] .b { border:1px solid #d5d7db; color:#444; font-size:10.5px; border-radius:3px; }
+  .A[data-app="density"] .b.pri { background:#0e3a5c; color:#fff; border-color:#0e3a5c; }
+  .A[data-app="density"] .body { grid-template-columns:184px 1fr; }
+  .A[data-app="density"] .shead { padding:8px 12px; font-size:12px; }
+  .A[data-app="density"] .nm { font-size:11px; line-height:1.6; }
+
+  .A[data-app="cardside"] .side { background:#f4f4f2; }
+  .A[data-app="cardside"] .sec, .A[data-app="cardside"] .shead small { display:none; }
+  .A[data-app="cardside"] .sidecards { display:flex; flex-direction:column; gap:7px; padding:10px; }
+  .A .scard { background:#fff; border:1px solid #e0deda; border-radius:8px; padding:8px 11px; display:flex; align-items:center; gap:8px; font-size:12px; font-weight:500; color:#222; }
+  .A .scount { margin-left:auto; background:#e8f1f8; color:#0e3a5c; font-size:10.5px; padding:1px 8px; border-radius:99px; }
+</style>
+</head>
+<body>
+
+<div class="labbar">
+  <span class="lbl">LANDING</span>
+  <button class="chip on" data-t="current">Current (blueprint)</button>
+  <button class="chip" data-t="bigtype">2 Big type</button>
+  <button class="chip" data-t="chalkboard">4 Chalkboard</button>
+  <button class="chip" data-t="paperink">5 Paper &amp; ink</button>
+  <button class="chip" data-t="pastel">6 Soft pastel</button>
+  <button class="chip" data-t="brutalist">7 Neo-brutalist</button>
+  <button class="chip" data-t="darkproj">8 Dark projector</button>
+  <button class="chip" data-t="stickers">9 Sticker sheet</button>
+  <button class="chip" data-t="gradient">10 Gradient SaaS</button>
+</div>
+
+<p class="secnote">Landing page — click a style above; everything below restyles instantly.</p>
+<div class="frame">
+<div class="L" data-theme="current" id="landing">
+  <div class="hero">
+    <div class="gridlayer"></div>
+    <div class="nav">
+      <span class="wordmark">
+        <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0a2e4a"/><rect x="6" y="6" width="20" height="20" rx="2" fill="none" stroke="#bfe0f5" stroke-width="1.6"/><rect x="17" y="10" width="5" height="4" fill="none" stroke="#ffd66b" stroke-width="1.6"/><rect x="10" y="10" width="5" height="4" fill="none" stroke="#bfe0f5" stroke-width="1.3"/><rect x="10" y="17" width="5" height="4" fill="none" stroke="#bfe0f5" stroke-width="1.3"/><rect x="17" y="17" width="5" height="4" fill="none" stroke="#bfe0f5" stroke-width="1.3"/></svg>
+        RosterHelper
+      </span>
+      <span class="cta" style="padding:8px 16px; font-size:13px">Open the app</span>
+    </div>
+    <div class="heroin">
+      <div>
+        <p class="overline">CLASSROOM SEATING CHARTS · FREE FOR TEACHERS</p>
+        <h1>Seating charts that <span class="hl"><span class="w1">pull</span> <span class="w2">their</span> <span class="w3">weight</span></span></h1>
+        <p class="sub">Set the rules — keep these two apart, front row for this one — and shuffle. Then take attendance, cold-call fairly, make groups, and print a whole-day sub packet from the same chart.</p>
+        <span class="cta">Open RosterHelper — it's free</span><span class="note">No account. No install.</span>
+      </div>
+      <div class="sheet" aria-hidden="true">
+        <svg viewBox="0 0 440 300">
+          <rect x="2" y="2" width="436" height="296" rx="3" fill="none" stroke="var(--illline)" stroke-width="2"/>
+          <text x="220" y="26" text-anchor="middle" font-size="10" fill="var(--illline)" font-family="IBM Plex Mono, monospace">FRONT OF ROOM</text>
+          <g fill="none" stroke="var(--illline)" stroke-width="2">
+            <rect x="36" y="48" width="52" height="36" rx="4"/><rect x="96" y="48" width="52" height="36" rx="4"/><rect x="246" y="48" width="52" height="36" rx="4"/><rect x="336" y="48" width="52" height="36" rx="4"/>
+            <rect x="36" y="108" width="52" height="36" rx="4"/><rect x="96" y="108" width="52" height="36" rx="4"/><rect x="246" y="108" width="52" height="36" rx="4"/><rect x="336" y="108" width="52" height="36" rx="4"/>
+            <rect x="66" y="168" width="52" height="36" rx="4"/><rect x="246" y="168" width="52" height="36" rx="4"/><rect x="336" y="168" width="52" height="36" rx="4"/>
+          </g>
+          <rect x="186" y="48" width="52" height="36" rx="4" fill="none" stroke="var(--illhot)" stroke-width="3"/>
+          <rect x="186" y="108" width="52" height="36" rx="4" fill="none" stroke="var(--illline)" stroke-width="2"/>
+          <rect x="30" y="236" width="86" height="30" rx="4" fill="none" stroke="var(--illline)" stroke-width="2"/>
+          <text x="73" y="255" text-anchor="middle" font-size="9" fill="var(--illline)" font-family="IBM Plex Mono, monospace">TEACHER</text>
+          <text x="260" y="258" font-size="9" fill="var(--illline)" font-family="IBM Plex Mono, monospace">RM 114 · 30 SEATS · RULES: 4 OK</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="below">
+    <div class="cards">
+      <div class="card"><span class="tag">SEATING</span><h3>Rules &amp; accommodations</h3><p>Keep-apart, front row, near the door, must sit alone — private flags generate the rules for you.</p></div>
+      <div class="card"><span class="tag">DAILY USE</span><h3>Attendance in two clicks</h3><p>Tap a name: here, tardy, absent. Print or export a week log straight from the chart.</p></div>
+      <div class="card"><span class="tag">PRINTABLES</span><h3>Whole-day sub packets</h3><p>Your schedule and lessons once; a typeset plans page plus every class's chart, landscape.</p></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="labbar" style="position:static">
+  <span class="lbl">APP</span>
+  <button class="chip on" data-a="current">Current</button>
+  <button class="chip" data-a="drafting">2 Full drafting table</button>
+  <button class="chip" data-a="ribbon">4 Ribbon toolbar</button>
+  <button class="chip" data-a="canvasfirst">5 Canvas-first</button>
+  <button class="chip" data-a="density">6 Pro density</button>
+  <button class="chip" data-a="cardside">7 Card sidebar</button>
+</div>
+
+<p class="secnote">App — the variants that weren't built. Same room, different chrome.</p>
+<div class="frame">
+<div class="A" data-app="current" id="app">
+  <div class="win">
+    <div>
+      <div class="top">
+        <span class="brand"><svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0a2e4a"/><rect x="6" y="6" width="20" height="20" rx="2" fill="none" stroke="#bfe0f5" stroke-width="1.6"/><rect x="17" y="10" width="5" height="4" fill="none" stroke="#ffd66b" stroke-width="1.6"/></svg>RosterHelper</span>
+        <span class="tab on">Chart A</span><span class="tab">Chart B</span>
+        <span class="sp"></span>
+        <button class="b ghost">Undo</button>
+        <button class="b pri">Shuffle</button>
+        <button class="b">Pick</button>
+        <button class="b">Teach</button>
+        <button class="b">Print ▾</button>
+        <button class="b">Edit room ▾</button>
+      </div>
+      <div class="ribbon">
+        <div class="rgrp"><div class="rrow"><button class="rb">+ Desk</button><button class="rb">+ Table</button><button class="rb">Object</button></div><div class="rlbl">SETUP</div></div>
+        <div class="rgrp"><div class="rrow"><button class="rb pri">Shuffle</button><button class="rb">Pin</button><button class="rb">Rules</button></div><div class="rlbl">SEATING</div></div>
+        <div class="rgrp"><div class="rrow"><button class="rb">Pick</button><button class="rb">Groups</button><button class="rb">Attendance</button></div><div class="rlbl">CLASS</div></div>
+        <div class="rgrp"><div class="rrow"><button class="rb">Chart</button><button class="rb">Sub packet</button><button class="rb">Tents</button></div><div class="rlbl">PRINT</div></div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="shead"><svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0a2e4a"/><rect x="6" y="6" width="20" height="20" rx="2" fill="none" stroke="#bfe0f5" stroke-width="1.6"/><rect x="17" y="10" width="5" height="4" fill="none" stroke="#ffd66b" stroke-width="1.6"/></svg><span>RosterHelper<small>6 of 6 seated · 12 seats</small></span></div>
+        <div class="sec"><div class="seclbl">ROSTER · 6</div><div class="nm">Maya R.<br>Jon A.<br>Dre W.<br>Lena K.<br>Sam T.<br>Priya N.</div></div>
+        <div class="sec"><div class="seclbl">RULES · 2</div><div class="nm">Maya ↮ Dre<br>Lena → front row</div></div>
+        <div class="sidecards">
+          <div class="scard">Roster<span class="scount">6</span></div>
+          <div class="scard">Rules<span class="scount">2</span></div>
+          <div class="scard">Violations<span class="scount" style="background:#fdecec;color:#a32d2d">0</span></div>
+          <div class="scard">Backup</div>
+        </div>
+      </div>
+      <div class="canvas">
+        <div class="float"><button class="fb pri">Shuffle</button><button class="fb">Pick</button><button class="fb">Groups</button><button class="fb">Print</button></div>
+        <div class="rail"><span>👥</span><span>＋</span><span>▲</span><span>⚙</span></div>
+        <div class="desk" style="left:6%; top:12%"><svg viewBox="0 0 130 89"><path d="M56,15 Q65,4 74,15 Q106,44 120,75 Q126,85 111,85 Q65,74 19,85 Q4,85 10,75 Q24,44 56,15 Z" fill="var(--deskfill)" stroke="var(--deskline)" stroke-width="3"/></svg><span class="dn">Maya R.</span></div>
+        <div class="desk" style="left:24%; top:12%"><svg viewBox="0 0 130 89"><path d="M56,15 Q65,4 74,15 Q106,44 120,75 Q126,85 111,85 Q65,74 19,85 Q4,85 10,75 Q24,44 56,15 Z" fill="var(--deskfill)" stroke="var(--deskline)" stroke-width="3"/></svg><span class="dn">Jon A.</span></div>
+        <div class="desk" style="left:50%; top:12%"><svg viewBox="0 0 130 89"><path d="M56,15 Q65,4 74,15 Q106,44 120,75 Q126,85 111,85 Q65,74 19,85 Q4,85 10,75 Q24,44 56,15 Z" fill="#fff8e2" stroke="#e3b93f" stroke-width="3"/></svg><span class="dn">Dre W.</span></div>
+        <div class="desk" style="left:68%; top:12%"><svg viewBox="0 0 130 89"><path d="M56,15 Q65,4 74,15 Q106,44 120,75 Q126,85 111,85 Q65,74 19,85 Q4,85 10,75 Q24,44 56,15 Z" fill="var(--deskfill)" stroke="var(--deskline)" stroke-width="3"/></svg><span class="dn">Lena K.</span></div>
+        <div class="desk" style="left:15%; top:48%"><svg viewBox="0 0 130 89"><path d="M56,15 Q65,4 74,15 Q106,44 120,75 Q126,85 111,85 Q65,74 19,85 Q4,85 10,75 Q24,44 56,15 Z" fill="var(--deskfill)" stroke="var(--deskline)" stroke-width="3"/></svg><span class="dn">Sam T.</span></div>
+        <div class="desk" style="left:59%; top:48%"><svg viewBox="0 0 130 89"><path d="M56,15 Q65,4 74,15 Q106,44 120,75 Q126,85 111,85 Q65,74 19,85 Q4,85 10,75 Q24,44 56,15 Z" fill="var(--deskfill)" stroke="var(--deskline)" stroke-width="3"/></svg><span class="dn">Priya N.</span></div>
+        <div class="meta">CHART A · 6/12 SEATS · RULES OK</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<p class="secnote" style="margin-bottom:40px">This page is a lab — nothing here changes the real site. Tell Claude a number to build one for real.</p>
+
+<script>
+document.querySelectorAll("[data-t]").forEach(function (c) {
+  c.addEventListener("click", function () {
+    document.querySelectorAll("[data-t]").forEach(function (x) { x.classList.remove("on"); });
+    c.classList.add("on");
+    document.getElementById("landing").setAttribute("data-theme", c.getAttribute("data-t"));
+  });
+});
+document.querySelectorAll("[data-a]").forEach(function (c) {
+  c.addEventListener("click", function () {
+    document.querySelectorAll("[data-a]").forEach(function (x) { x.classList.remove("on"); });
+    c.classList.add("on");
+    document.getElementById("app").setAttribute("data-app", c.getAttribute("data-a"));
+  });
+});
+</script>
+</body>
+</html>
