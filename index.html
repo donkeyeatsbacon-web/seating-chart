@@ -25,7 +25,7 @@
 <script>
   // Share links from the app (old or new) land here with a #share= fragment —
   // hand them straight to the app so the shared chart opens.
-  if (/[#&]share=/.test(location.hash)) location.replace("/app/" + location.hash);
+  if (/[#&](share|join)=/.test(location.hash)) location.replace("/app/" + location.hash);
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

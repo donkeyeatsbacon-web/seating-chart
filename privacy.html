@@ -45,7 +45,7 @@
 <div class="wrap">
   <p class="overline">PRIVACY POLICY</p>
   <h1>Your students' data never reaches us</h1>
-  <p class="date">Effective August 28, 2026</p>
+  <p class="date">Effective August 28, 2026 · Updated August 30, 2026</p>
 
   <div class="tldr">
     <strong>The short version</strong>
@@ -57,8 +57,9 @@
   <h2>What stays on your device</h2>
   <p>Everything you put into RosterHelper — student names and nicknames, seating charts, rules and
   accommodation flags, attendance records, imported photos, saved rosters, and substitute plans — is kept in
-  your browser's local storage on the computer you're using. It is never uploaded, transmitted, or synced
-  anywhere. Closing the tab, or working offline, changes nothing about this: the app runs entirely on your
+  your browser's local storage on the computer you're using. It is never uploaded or synced
+  anywhere (the optional board session moves end-to-end-encrypted messages between your own devices —
+  see below). Closing the tab, or working offline, changes nothing about this: the app runs entirely on your
   device. If your browser's site data is cleared (common on shared school computers), that data is gone,
   which is why the app offers a Download backup button — backups are ordinary files saved wherever you
   choose, and they never pass through us either.</p>
@@ -75,6 +76,15 @@
   itself — there is no server copy. Anyone who has the link can open what's inside it, so treat a share link
   like the document it contains: send it only to people who should see those names. Student photos are never
   included in share links.</p>
+
+  <h2>Live board sessions</h2>
+  <p>If you start a board session — so students can mark attendance on a Promethean board or another shared
+  screen — your devices exchange messages through a small relay server. Those messages are end-to-end
+  encrypted on your devices before they leave: the decryption key lives only in the join link itself, in a
+  part of the URL that browsers never send to any server. The relay sees a random room code and scrambled
+  bytes — never a name, never a mark. Nothing is stored anywhere: the relay keeps no history, and the board
+  device holds the class list in memory only, forgetting it the moment the tab closes. Board sessions are
+  optional; everything else in RosterHelper works without one.</p>
 
   <h2>Email</h2>
   <p>If you email <a href="mailto:feedback@rosterhelper.com">feedback@rosterhelper.com</a>, we receive what
