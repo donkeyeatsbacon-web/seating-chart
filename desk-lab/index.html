@@ -98,12 +98,13 @@
 <header class="lab"><div class="wrap">
   <p class="overline">GEOMETRY SANDBOX</p>
   <h1>Desk shape lab</h1>
-  <p>Drag desks together and watch them mate. The app's <strong>Unique shape</strong> has two exactly congruent
-  curved edges (chord 115.004, bulge 40.002 on both), so all nine of its mates lock flush. The
-  <strong>real MooreCo Hierarchy Shapes</strong> outline, traced from page 3 of the manufacturer's spec
-  drawing, has no congruent pair at all — its closest match is off by 4.7% — so every arrangement either
-  overlaps or gapes. Joint readings show how much edge is <em>actually touching</em>, not the nearest
-  point, because two desks can kiss at a corner while the mated edges hang wide open.</p>
+  <p>Three outlines to compare. <strong>Unique shape</strong> is what the app draws today.
+  <strong>MooreCo Shapes</strong> is traced from that manufacturer's spec drawing — included because it was
+  my first guess, and it's <em>wrong</em>: it's a smooth dome with no apex corner and no congruent edge pair.
+  <strong>Your desk (fitted)</strong> is recovered from a photo of the real thing by fitting a free
+  apex-and-two-straight-edges outline to the silhouette (IoU 0.975, vs 0.885 and 0.903 for the other two).
+  The headline: the app has the topology right and the proportions nearly right — but draws the curves
+  about <strong>1.8× too deep</strong> (bulge 40.0 where the real desk is 22.0).</p>
 </div></header>
 
 <main class="wrap">
@@ -112,7 +113,8 @@
     <div class="toolbar">
       <div class="seg" role="group" aria-label="Desk shape">
         <button id="sh-kite" aria-pressed="true">Unique shape</button>
-        <button id="sh-real" aria-pressed="false">Real MooreCo</button>
+        <button id="sh-real" aria-pressed="false">MooreCo Shapes</button>
+        <button id="sh-fit" aria-pressed="false">Your desk (fitted)</button>
       </div>
       <button class="btn amber" id="add">Add desk</button>
       <button class="btn" id="rotL" title="Rotate selected left">⟲ 15°</button>
@@ -157,9 +159,26 @@
       <div class="stat"><span>Overlapping pairs</span><span id="m-over">0</span></div>
       <div class="stat"><span>Footprint</span><span id="m-bbox">—</span></div>
       <div class="stat"><span>Packing density</span><span id="m-fill">—</span></div>
+      <h2 style="margin-top:14px">Score</h2>
+      <div class="stat"><span>Flush joints</span><span id="m-nflush">—</span></div>
+      <div class="stat"><span>Flush total</span><span id="m-flush">—</span></div>
+      <div class="stat"><span>Loose (gaping) total</span><span id="m-loose">—</span></div>
+      <div class="stat"><span>vs. best possible</span><span id="m-vs">—</span></div>
       <h2 style="margin-top:14px">Joints</h2>
       <ul class="joints" id="m-joints"><li><span>no contacts yet</span></li></ul>
       <p class="note" id="m-note"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Saved arrangements</h2>
+      <div class="presetrow" style="margin-bottom:8px">
+        <button id="saveCur" style="border-color:#2f8f5b;color:#2f8f5b;font-weight:600">Save current</button>
+        <button id="copyAll">Copy all for Claude</button>
+        <button id="clearSaves">Clear</button>
+      </div>
+      <ul class="joints" id="saveList"><li><span>nothing saved yet</span></li></ul>
+      <p class="note" id="saveNote">Saved in this browser. “Copy all” puts a compact JSON on your
+      clipboard — paste it into the chat and I can reproduce exactly what you built.</p>
     </div>
 
     <div class="panel">
@@ -192,7 +211,7 @@
 </div></footer>
 
 <script>
-const DATA = {"unitInches":0.26079,"kite":{"path":"M64,3 L12,40 L4,103 Q61.85,63.5 119,104 Q126.56,34.24 64,3 Z","poly":"M64.00,3.00 L12.00,40.00 L4.00,103.00 L8.45,100.08 L12.90,97.40 L17.34,94.95 L21.78,92.74 L26.22,90.77 L30.66,89.03 L35.10,87.53 L39.53,86.27 L43.97,85.24 L48.40,84.45 L52.82,83.90 L57.25,83.58 L61.67,83.50 L66.10,83.66 L70.52,84.05 L74.93,84.68 L79.35,85.55 L83.76,86.65 L88.18,87.99 L92.59,89.57 L96.99,91.38 L101.40,93.43 L105.80,95.72 L110.20,98.24 L114.60,101.00 L119.00,104.00 L119.48,98.69 L119.75,93.50 L119.81,88.41 L119.67,83.45 L119.31,78.59 L118.76,73.85 L117.99,69.23 L117.01,64.72 L115.83,60.32 L114.44,56.04 L112.85,51.87 L111.04,47.81 L109.03,43.87 L106.81,40.04 L104.38,36.33 L101.75,32.73 L98.91,29.24 L95.86,25.87 L92.60,22.61 L89.14,19.47 L85.47,16.44 L81.59,13.52 L77.50,10.72 L73.21,8.03 L68.71,5.46 Z","poses":[{"d":90.0,"at":[64,-9],"own":[64,-9],"kind":"exact","name":"apex +90"},{"d":270.0,"at":[64,-9],"own":[64,-9],"kind":"exact","name":"apex +270"},{"d":180.0,"at":[64,-9],"own":[64,-9],"kind":"exact","name":"apex +180"},{"d":299.06,"at":[61.675,83.5],"own":[109.03,43.87],"kind":"exact","name":"curve nest"},{"d":60.94,"at":[109.03,43.87],"own":[61.675,83.5],"kind":"exact","name":"curve nest"},{"d":180.0,"at":[38,21.5],"own":[38,21.5],"kind":"exact","name":"upper edge"},{"d":180.0,"at":[8,71.5],"own":[8,71.5],"kind":"exact","name":"lower edge"},{"d":227.4,"at":[38,21.5],"own":[8,71.5],"kind":"exact","name":"edge cross"},{"d":132.6,"at":[8,71.5],"own":[38,21.5],"kind":"exact","name":"edge cross"}],"label":"Unique shape (app)","dims":[115.82,101.0]},"real":{"path":"M4.26,93.25 L4.05,89.22 L4.00,85.14 L4.09,81.06 L4.34,76.93 L4.78,72.77 L5.37,68.65 L6.15,64.48 L7.10,60.35 L8.17,56.28 L9.45,52.23 L10.92,48.24 L12.50,44.29 L14.27,40.37 L16.20,36.59 L18.26,32.91 L20.46,29.25 L22.82,25.77 L25.31,22.33 L27.90,19.06 L30.59,15.89 L33.42,12.88 L36.35,10.00 L39.31,7.21 L42.41,4.60 L43.01,4.16 L43.61,3.82 L44.30,3.52 L45.03,3.26 L45.72,3.09 L46.49,3.00 L47.18,3.00 L47.90,3.09 L51.94,3.73 L55.94,4.50 L59.93,5.49 L63.97,6.66 L67.92,7.94 L71.88,9.39 L75.79,11.04 L79.62,12.84 L83.40,14.82 L87.08,16.92 L90.74,19.20 L94.25,21.60 L97.71,24.18 L101.01,26.90 L104.18,29.71 L107.28,32.68 L110.20,35.73 L113.04,38.92 L115.66,42.14 L118.19,45.49 L120.55,48.93 L122.75,52.40 L124.81,55.93 L126.69,59.54 L127.04,60.35 L127.30,61.17 L127.43,62.06 L127.47,62.97 L127.38,63.87 L127.18,64.77 L126.87,65.60 L126.48,66.37 L124.38,70.10 L122.39,73.93 L120.59,77.84 L118.97,81.84 L117.45,85.91 L116.17,90.00 L115.01,94.16 L114.06,98.33 L113.86,99.11 L113.55,99.84 L113.16,100.57 L112.70,101.26 L112.17,101.85 L111.59,102.42 L110.93,102.89 L110.20,103.27 L109.51,103.57 L108.74,103.79 L107.93,103.96 L107.11,104.00 L106.29,103.96 L105.48,103.79 L104.71,103.57 L103.98,103.27 L99.97,101.41 L95.90,99.75 L91.73,98.24 L87.48,96.91 L83.13,95.75 L78.71,94.77 L74.28,93.95 L69.77,93.34 L65.22,92.96 L60.66,92.75 L56.12,92.70 L51.56,92.88 L47.05,93.25 L42.58,93.83 L38.12,94.56 L33.73,95.50 L29.38,96.62 L25.14,97.90 L20.97,99.35 L16.89,101.00 L15.90,101.33 L14.87,101.60 L13.76,101.68 L12.68,101.68 L11.61,101.56 L10.53,101.26 L9.54,100.86 L8.60,100.34 L7.74,99.75 L6.93,99.06 L6.18,98.24 L5.60,97.34 L5.07,96.35 L4.69,95.36 L4.43,94.29 Z","poly":"M4.26,93.25 L4.05,89.22 L4.00,85.14 L4.09,81.06 L4.34,76.93 L4.78,72.77 L5.37,68.65 L6.15,64.48 L7.10,60.35 L8.17,56.28 L9.45,52.23 L10.92,48.24 L12.50,44.29 L14.27,40.37 L16.20,36.59 L18.26,32.91 L20.46,29.25 L22.82,25.77 L25.31,22.33 L27.90,19.06 L30.59,15.89 L33.42,12.88 L36.35,10.00 L39.31,7.21 L42.41,4.60 L43.01,4.16 L43.61,3.82 L44.30,3.52 L45.03,3.26 L45.72,3.09 L46.49,3.00 L47.18,3.00 L47.90,3.09 L51.94,3.73 L55.94,4.50 L59.93,5.49 L63.97,6.66 L67.92,7.94 L71.88,9.39 L75.79,11.04 L79.62,12.84 L83.40,14.82 L87.08,16.92 L90.74,19.20 L94.25,21.60 L97.71,24.18 L101.01,26.90 L104.18,29.71 L107.28,32.68 L110.20,35.73 L113.04,38.92 L115.66,42.14 L118.19,45.49 L120.55,48.93 L122.75,52.40 L124.81,55.93 L126.69,59.54 L127.04,60.35 L127.30,61.17 L127.43,62.06 L127.47,62.97 L127.38,63.87 L127.18,64.77 L126.87,65.60 L126.48,66.37 L124.38,70.10 L122.39,73.93 L120.59,77.84 L118.97,81.84 L117.45,85.91 L116.17,90.00 L115.01,94.16 L114.06,98.33 L113.86,99.11 L113.55,99.84 L113.16,100.57 L112.70,101.26 L112.17,101.85 L111.59,102.42 L110.93,102.89 L110.20,103.27 L109.51,103.57 L108.74,103.79 L107.93,103.96 L107.11,104.00 L106.29,103.96 L105.48,103.79 L104.71,103.57 L103.98,103.27 L99.97,101.41 L95.90,99.75 L91.73,98.24 L87.48,96.91 L83.13,95.75 L78.71,94.77 L74.28,93.95 L69.77,93.34 L65.22,92.96 L60.66,92.75 L56.12,92.70 L51.56,92.88 L47.05,93.25 L42.58,93.83 L38.12,94.56 L33.73,95.50 L29.38,96.62 L25.14,97.90 L20.97,99.35 L16.89,101.00 L15.90,101.33 L14.87,101.60 L13.76,101.68 L12.68,101.68 L11.61,101.56 L10.53,101.26 L9.54,100.86 L8.60,100.34 L7.74,99.75 L6.93,99.06 L6.18,98.24 L5.60,97.34 L5.07,96.35 L4.69,95.36 L4.43,94.29 Z","poses":[{"d":325.35,"at":[59.358,102.778],"own":[86.961,32.532],"kind":"curve","name":"scoop \u2190 sweep"},{"d":34.65,"at":[86.961,32.532],"own":[59.358,102.778],"kind":"curve","name":"sweep \u2190 scoop"},{"d":180.0,"at":[119.509,82.245],"own":[119.509,82.245],"kind":"approx","name":"facet flip"}],"label":"Real MooreCo outline","dims":[123.47,101.0]}};
+const DATA = {"unitInches":0.26079,"kite":{"path":"M64,3 L12,40 L4,103 Q61.85,63.5 119,104 Q126.56,34.24 64,3 Z","poly":"M64.00,3.00 L12.00,40.00 L4.00,103.00 L8.45,100.08 L12.90,97.40 L17.34,94.95 L21.78,92.74 L26.22,90.77 L30.66,89.03 L35.10,87.53 L39.53,86.27 L43.97,85.24 L48.40,84.45 L52.82,83.90 L57.25,83.58 L61.67,83.50 L66.10,83.66 L70.52,84.05 L74.93,84.68 L79.35,85.55 L83.76,86.65 L88.18,87.99 L92.59,89.57 L96.99,91.38 L101.40,93.43 L105.80,95.72 L110.20,98.24 L114.60,101.00 L119.00,104.00 L119.48,98.69 L119.75,93.50 L119.81,88.41 L119.67,83.45 L119.31,78.59 L118.76,73.85 L117.99,69.23 L117.01,64.72 L115.83,60.32 L114.44,56.04 L112.85,51.87 L111.04,47.81 L109.03,43.87 L106.81,40.04 L104.38,36.33 L101.75,32.73 L98.91,29.24 L95.86,25.87 L92.60,22.61 L89.14,19.47 L85.47,16.44 L81.59,13.52 L77.50,10.72 L73.21,8.03 L68.71,5.46 Z","poses":[{"d":90.0,"at":[64,-9],"own":[64,-9],"kind":"exact","name":"apex +90"},{"d":270.0,"at":[64,-9],"own":[64,-9],"kind":"exact","name":"apex +270"},{"d":180.0,"at":[64,-9],"own":[64,-9],"kind":"exact","name":"apex +180"},{"d":299.06,"at":[61.675,83.5],"own":[109.03,43.87],"kind":"exact","name":"curve nest"},{"d":60.94,"at":[109.03,43.87],"own":[61.675,83.5],"kind":"exact","name":"curve nest"},{"d":180.0,"at":[38,21.5],"own":[38,21.5],"kind":"exact","name":"upper edge"},{"d":180.0,"at":[8,71.5],"own":[8,71.5],"kind":"exact","name":"lower edge"},{"d":227.4,"at":[38,21.5],"own":[8,71.5],"kind":"exact","name":"edge cross"},{"d":132.6,"at":[8,71.5],"own":[38,21.5],"kind":"exact","name":"edge cross"}],"label":"Unique shape (app)","dims":[115.82,101.0]},"real":{"path":"M4.26,93.25 L4.05,89.22 L4.00,85.14 L4.09,81.06 L4.34,76.93 L4.78,72.77 L5.37,68.65 L6.15,64.48 L7.10,60.35 L8.17,56.28 L9.45,52.23 L10.92,48.24 L12.50,44.29 L14.27,40.37 L16.20,36.59 L18.26,32.91 L20.46,29.25 L22.82,25.77 L25.31,22.33 L27.90,19.06 L30.59,15.89 L33.42,12.88 L36.35,10.00 L39.31,7.21 L42.41,4.60 L43.01,4.16 L43.61,3.82 L44.30,3.52 L45.03,3.26 L45.72,3.09 L46.49,3.00 L47.18,3.00 L47.90,3.09 L51.94,3.73 L55.94,4.50 L59.93,5.49 L63.97,6.66 L67.92,7.94 L71.88,9.39 L75.79,11.04 L79.62,12.84 L83.40,14.82 L87.08,16.92 L90.74,19.20 L94.25,21.60 L97.71,24.18 L101.01,26.90 L104.18,29.71 L107.28,32.68 L110.20,35.73 L113.04,38.92 L115.66,42.14 L118.19,45.49 L120.55,48.93 L122.75,52.40 L124.81,55.93 L126.69,59.54 L127.04,60.35 L127.30,61.17 L127.43,62.06 L127.47,62.97 L127.38,63.87 L127.18,64.77 L126.87,65.60 L126.48,66.37 L124.38,70.10 L122.39,73.93 L120.59,77.84 L118.97,81.84 L117.45,85.91 L116.17,90.00 L115.01,94.16 L114.06,98.33 L113.86,99.11 L113.55,99.84 L113.16,100.57 L112.70,101.26 L112.17,101.85 L111.59,102.42 L110.93,102.89 L110.20,103.27 L109.51,103.57 L108.74,103.79 L107.93,103.96 L107.11,104.00 L106.29,103.96 L105.48,103.79 L104.71,103.57 L103.98,103.27 L99.97,101.41 L95.90,99.75 L91.73,98.24 L87.48,96.91 L83.13,95.75 L78.71,94.77 L74.28,93.95 L69.77,93.34 L65.22,92.96 L60.66,92.75 L56.12,92.70 L51.56,92.88 L47.05,93.25 L42.58,93.83 L38.12,94.56 L33.73,95.50 L29.38,96.62 L25.14,97.90 L20.97,99.35 L16.89,101.00 L15.90,101.33 L14.87,101.60 L13.76,101.68 L12.68,101.68 L11.61,101.56 L10.53,101.26 L9.54,100.86 L8.60,100.34 L7.74,99.75 L6.93,99.06 L6.18,98.24 L5.60,97.34 L5.07,96.35 L4.69,95.36 L4.43,94.29 Z","poly":"M4.26,93.25 L4.05,89.22 L4.00,85.14 L4.09,81.06 L4.34,76.93 L4.78,72.77 L5.37,68.65 L6.15,64.48 L7.10,60.35 L8.17,56.28 L9.45,52.23 L10.92,48.24 L12.50,44.29 L14.27,40.37 L16.20,36.59 L18.26,32.91 L20.46,29.25 L22.82,25.77 L25.31,22.33 L27.90,19.06 L30.59,15.89 L33.42,12.88 L36.35,10.00 L39.31,7.21 L42.41,4.60 L43.01,4.16 L43.61,3.82 L44.30,3.52 L45.03,3.26 L45.72,3.09 L46.49,3.00 L47.18,3.00 L47.90,3.09 L51.94,3.73 L55.94,4.50 L59.93,5.49 L63.97,6.66 L67.92,7.94 L71.88,9.39 L75.79,11.04 L79.62,12.84 L83.40,14.82 L87.08,16.92 L90.74,19.20 L94.25,21.60 L97.71,24.18 L101.01,26.90 L104.18,29.71 L107.28,32.68 L110.20,35.73 L113.04,38.92 L115.66,42.14 L118.19,45.49 L120.55,48.93 L122.75,52.40 L124.81,55.93 L126.69,59.54 L127.04,60.35 L127.30,61.17 L127.43,62.06 L127.47,62.97 L127.38,63.87 L127.18,64.77 L126.87,65.60 L126.48,66.37 L124.38,70.10 L122.39,73.93 L120.59,77.84 L118.97,81.84 L117.45,85.91 L116.17,90.00 L115.01,94.16 L114.06,98.33 L113.86,99.11 L113.55,99.84 L113.16,100.57 L112.70,101.26 L112.17,101.85 L111.59,102.42 L110.93,102.89 L110.20,103.27 L109.51,103.57 L108.74,103.79 L107.93,103.96 L107.11,104.00 L106.29,103.96 L105.48,103.79 L104.71,103.57 L103.98,103.27 L99.97,101.41 L95.90,99.75 L91.73,98.24 L87.48,96.91 L83.13,95.75 L78.71,94.77 L74.28,93.95 L69.77,93.34 L65.22,92.96 L60.66,92.75 L56.12,92.70 L51.56,92.88 L47.05,93.25 L42.58,93.83 L38.12,94.56 L33.73,95.50 L29.38,96.62 L25.14,97.90 L20.97,99.35 L16.89,101.00 L15.90,101.33 L14.87,101.60 L13.76,101.68 L12.68,101.68 L11.61,101.56 L10.53,101.26 L9.54,100.86 L8.60,100.34 L7.74,99.75 L6.93,99.06 L6.18,98.24 L5.60,97.34 L5.07,96.35 L4.69,95.36 L4.43,94.29 Z","poses":[{"d":325.35,"at":[59.358,102.778],"own":[86.961,32.532],"kind":"curve","name":"scoop \u2190 sweep"},{"d":34.65,"at":[86.961,32.532],"own":[59.358,102.778],"kind":"curve","name":"sweep \u2190 scoop"},{"d":180.0,"at":[119.509,82.245],"own":[119.509,82.245],"kind":"approx","name":"facet flip"}],"label":"Real MooreCo outline","dims":[123.47,101.0]},"fitted":{"label":"Your desk (fitted)","path":"M65.21,3.00 L59.43,5.81 L53.64,8.63 L47.86,11.44 L42.08,14.26 L36.30,17.07 L30.51,19.89 L24.73,22.70 L18.95,25.52 L13.16,28.33 L12.15,36.38 L11.13,44.43 L10.11,52.48 L9.09,60.53 L8.07,68.58 L7.05,76.63 L6.04,84.68 L5.02,92.73 L4.00,100.78 L7.62,99.65 L11.23,98.60 L14.85,97.64 L18.45,96.75 L22.06,95.95 L25.66,95.23 L29.25,94.59 L32.85,94.02 L36.43,93.54 L40.02,93.14 L43.60,92.83 L47.18,92.59 L50.75,92.43 L54.32,92.35 L57.89,92.36 L61.45,92.44 L65.01,92.61 L68.56,92.85 L72.12,93.18 L75.66,93.59 L79.21,94.08 L82.75,94.65 L86.28,95.30 L89.81,96.03 L93.34,96.84 L96.87,97.74 L100.39,98.71 L103.91,99.76 L107.42,100.90 L110.93,102.11 L114.44,103.41 L117.94,104.79 L121.44,106.25 L120.87,102.50 L120.23,98.79 L119.52,95.12 L118.74,91.49 L117.89,87.90 L116.97,84.34 L115.97,80.83 L114.91,77.35 L113.77,73.91 L112.57,70.51 L111.29,67.15 L109.94,63.83 L108.52,60.55 L107.03,57.30 L105.47,54.10 L103.83,50.93 L102.13,47.80 L100.36,44.71 L98.51,41.66 L96.59,38.65 L94.61,35.67 L92.55,32.74 L90.42,29.84 L88.22,26.98 L85.94,24.16 L83.60,21.38 L81.19,18.64 L78.70,15.94 L76.15,13.27 L73.52,10.65 L70.82,8.06 L68.05,5.51 Z","poly":"M65.21,3.00 L59.43,5.81 L53.64,8.63 L47.86,11.44 L42.08,14.26 L36.30,17.07 L30.51,19.89 L24.73,22.70 L18.95,25.52 L13.16,28.33 L12.15,36.38 L11.13,44.43 L10.11,52.48 L9.09,60.53 L8.07,68.58 L7.05,76.63 L6.04,84.68 L5.02,92.73 L4.00,100.78 L7.62,99.65 L11.23,98.60 L14.85,97.64 L18.45,96.75 L22.06,95.95 L25.66,95.23 L29.25,94.59 L32.85,94.02 L36.43,93.54 L40.02,93.14 L43.60,92.83 L47.18,92.59 L50.75,92.43 L54.32,92.35 L57.89,92.36 L61.45,92.44 L65.01,92.61 L68.56,92.85 L72.12,93.18 L75.66,93.59 L79.21,94.08 L82.75,94.65 L86.28,95.30 L89.81,96.03 L93.34,96.84 L96.87,97.74 L100.39,98.71 L103.91,99.76 L107.42,100.90 L110.93,102.11 L114.44,103.41 L117.94,104.79 L121.44,106.25 L120.87,102.50 L120.23,98.79 L119.52,95.12 L118.74,91.49 L117.89,87.90 L116.97,84.34 L115.97,80.83 L114.91,77.35 L113.77,73.91 L112.57,70.51 L111.29,67.15 L109.94,63.83 L108.52,60.55 L107.03,57.30 L105.47,54.10 L103.83,50.93 L102.13,47.80 L100.36,44.71 L98.51,41.66 L96.59,38.65 L94.61,35.67 L92.55,32.74 L90.42,29.84 L88.22,26.98 L85.94,24.16 L83.60,21.38 L81.19,18.64 L78.70,15.94 L76.15,13.27 L73.52,10.65 L70.82,8.06 L68.05,5.51 Z","dims":[117.44,103.25],"poses":[{"d":90.0,"at":[66.771,-8.898],"own":[66.771,-8.898],"kind":"exact","name":"apex +90"},{"d":270.0,"at":[66.771,-8.898],"own":[66.771,-8.898],"kind":"exact","name":"apex \u221290"},{"d":180.0,"at":[66.771,-8.898],"own":[66.771,-8.898],"kind":"exact","name":"apex 180"},{"d":301.24,"at":[63.231,92.515],"own":[102.992,49.359],"kind":"exact","name":"curve nest"},{"d":58.76,"at":[102.992,49.359],"own":[63.231,92.515],"kind":"exact","name":"curve nest"},{"d":180.0,"at":[39.188,15.666],"own":[39.188,15.666],"kind":"exact","name":"upper edge"},{"d":180.0,"at":[8.582,64.555],"own":[8.582,64.555],"kind":"exact","name":"lower edge"},{"d":236.84,"at":[39.188,15.666],"own":[8.582,64.555],"kind":"exact","name":"edge cross"},{"d":123.16,"at":[8.582,64.555],"own":[39.188,15.666],"kind":"exact","name":"edge cross"}]}};
 
 /* ---------- geometry helpers ---------- */
 const rad = d => d * Math.PI / 180;
@@ -259,16 +278,28 @@ function probes(poly, step = 5, inset = 1.6) {
 
 /* ---------- state ---------- */
 const SHAPES = {};
-for (const k of ["kite", "real"]) {
+for (const k of ["kite", "real", "fitted"]) {
   const s = DATA[k];
   SHAPES[k] = { ...s, pts: parsePoly(s.poly) };
   SHAPES[k].probes = probes(SHAPES[k].pts);
   SHAPES[k].area = polyArea(SHAPES[k].pts);
 }
 const UNIT = DATA.unitInches;
+
+/* The arrangement real classrooms actually build: four tops in 4-fold rotational
+   symmetry about one centre, concave student edges facing outward. Found by
+   searching the rotation centre that maximises seam contact with no overlap —
+   17.7" of touching edge per seam, 58.9" square footprint, small centre opening.
+   A rotation's centre is its own fixed point, so at == own == REAL_C. */
+const REAL_C = [28.0, 116.0];
+SHAPES.real.poses.push(
+  { d: 90,  at: REAL_C, own: REAL_C, kind: "cluster", name: "cluster +90°" },
+  { d: 270, at: REAL_C, own: REAL_C, kind: "cluster", name: "cluster −90°" }
+);
 let shape = "kite";
 let desks = [];
 let sel = 0;
+let LAST = {};                       // score of the currently-rendered arrangement
 let uid = 1;
 
 const svg = document.getElementById("svg");
@@ -335,7 +366,7 @@ function render() {
     p.setAttribute("stroke-linejoin", "round");
     g.appendChild(p);
     if (document.getElementById("overlay").checked) {
-      const other = shape === "kite" ? SHAPES.real : SHAPES.kite;
+      const other = shape === "kite" ? SHAPES.fitted : SHAPES.kite;
       const q = document.createElementNS("http://www.w3.org/2000/svg", "path");
       q.setAttribute("d", other.path);
       q.setAttribute("fill", "none");
@@ -389,6 +420,35 @@ function stats(bad, pairs, wp) {
     document.getElementById("m-fill").textContent =
       (desks.length * S().area / (w*h) * 100).toFixed(1) + "%";
   }
+  /* One number for "is this arrangement better?" — eyeballing four joints doesn't work.
+     Flush total rewards edge that actually touches; loose total penalises edge that runs
+     alongside but gapes. BEST[] is the optimum found by enumerating every arrangement
+     reachable from this shape's mates. */
+  /* measured in-page, so the threshold matches this file's own polygon sampling
+     (the offline enumerator reads ~1" lower on a coarser outline) */
+  const BEST = { kite: { n: 3, flush: 96.8 }, fitted: { n: 3, flush: 94.1 }, real: null };
+  const nFlush = pairs.filter(p => !p.over && p.flush).length;
+  const flushIn = pairs.filter(p => !p.over && p.flush)
+                       .reduce((s, p) => s + p.tight * UNIT, 0);
+  const looseIn = pairs.filter(p => !p.over && !p.flush)
+                       .reduce((s, p) => s + (p.near - p.tight) * UNIT, 0);
+  LAST = { nFlush, flushIn, looseIn, over: ov, desks: desks.length };
+  document.getElementById("m-nflush").textContent = nFlush;
+  document.getElementById("m-flush").textContent  = flushIn.toFixed(1) + "″";
+  const le = document.getElementById("m-loose");
+  le.textContent = looseIn.toFixed(1) + "″";
+  le.className = looseIn > 0.5 ? "v-bad" : "v-good";
+  const b = BEST[shape];
+  const vs = document.getElementById("m-vs");
+  if (!b || desks.length !== 4) { vs.textContent = "—"; vs.className = ""; }
+  else if (ov) { vs.textContent = "overlapping"; vs.className = "v-bad"; }
+  else if (nFlush >= b.n && looseIn < 0.5 && flushIn >= b.flush - 0.5) {
+    vs.textContent = "optimal ✓"; vs.className = "v-good";
+  } else {
+    vs.textContent = `${nFlush}/${b.n} joints, ${flushIn.toFixed(0)}/${b.flush}″`;
+    vs.className = looseIn > 0.5 ? "v-bad" : "";
+  }
+
   const ul = document.getElementById("m-joints");
   if (!pairs.length) ul.innerHTML = "<li><span>no contacts yet</span></li>";
   else ul.innerHTML = pairs.map(p => {
@@ -398,8 +458,8 @@ function stats(bad, pairs, wp) {
     return `<li><span>${tag}</span><span>${(p.tight*UNIT).toFixed(1)}″ of ${(p.near*UNIT).toFixed(1)}″</span></li>`;
   }).join("");
   const loose = pairs.filter(p => !p.over && !p.flush).length;
-  document.getElementById("m-note").textContent = shape === "kite"
-    ? "Joints show the length of edge actually touching. All 9 kite mates close along their full shared edge."
+  document.getElementById("m-note").textContent = shape !== "real"
+    ? "Joints show the length of edge actually touching, not the nearest point — two desks can kiss at a corner while the mated edges hang open."
     : "“3.7″ of 27.4″” means the edges run alongside for 27.4″ but only touch over 3.7″ — the mate is approximate, "
       + "so the joint gapes." + (loose ? "" : " Drag two desks together to see it.");
 }
@@ -487,10 +547,78 @@ function setShape(k) {
   shape = k;
   document.getElementById("sh-kite").setAttribute("aria-pressed", k === "kite");
   document.getElementById("sh-real").setAttribute("aria-pressed", k === "real");
+  document.getElementById("sh-fit").setAttribute("aria-pressed", k === "fitted");
   buildPoseList(); buildPresets(); reset();
 }
 document.getElementById("sh-kite").onclick = () => setShape("kite");
 document.getElementById("sh-real").onclick = () => setShape("real");
+document.getElementById("sh-fit").onclick  = () => setShape("fitted");
+
+/* ---------- saving ---------- */
+const SAVE_KEY = "rosterhelper.desklab.saves";
+function loadSaves() {
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || []; } catch (e) { return []; }
+}
+function putSaves(v) {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch (e) {}
+  renderSaves();
+}
+function saveCurrent() {
+  const v = loadSaves();
+  v.push({
+    shape,
+    desks: desks.map(d => [ +d.x.toFixed(2), +d.y.toFixed(2), +d.r.toFixed(2) ]),
+    nFlush: LAST.nFlush, flushIn: +(LAST.flushIn || 0).toFixed(1),
+    looseIn: +(LAST.looseIn || 0).toFixed(1), over: LAST.over || 0
+  });
+  putSaves(v);
+}
+function renderSaves() {
+  const v = loadSaves(), el = document.getElementById("saveList");
+  if (!v.length) { el.innerHTML = "<li><span>nothing saved yet</span></li>"; return; }
+  el.innerHTML = v.map((s, i) => {
+    const cls = s.over ? "v-bad" : (s.looseIn > 0.5 ? "" : "v-good");
+    const loose = s.looseIn > 0.5 ? ` +${s.looseIn}″loose` : "";
+    return `<li><span>${i + 1}. ${s.shape} ×${s.desks.length}</span>`
+      + `<span><b class="${cls}">${s.nFlush}f ${s.flushIn}″${loose}</b> `
+      + `<a href="#" data-load="${i}">load</a> <a href="#" data-del="${i}">✕</a></span></li>`;
+  }).join("");
+  el.querySelectorAll("[data-load]").forEach(a => a.onclick = e => {
+    e.preventDefault();
+    const s = loadSaves()[+a.dataset.load];
+    if (s.shape !== shape) setShape(s.shape);
+    desks = s.desks.map(d => ({ id: uid++, x: d[0], y: d[1], r: d[2] }));
+    sel = 0; render();
+  });
+  el.querySelectorAll("[data-del]").forEach(a => a.onclick = e => {
+    e.preventDefault();
+    const v2 = loadSaves(); v2.splice(+a.dataset.del, 1); putSaves(v2);
+  });
+}
+async function copyAll() {
+  const saves = loadSaves();
+  if (!saves.length) {
+    document.getElementById("saveNote").textContent = "Nothing saved yet — hit “Save current” first.";
+    return;
+  }
+  const payload = JSON.stringify({ deskLab: 1, saves });
+  const note = document.getElementById("saveNote");
+  document.querySelectorAll("#saveList ~ textarea, #saveNote ~ textarea").forEach(t => t.remove());
+  try {
+    await navigator.clipboard.writeText(payload);
+    note.textContent = `Copied ${saves.length} arrangement(s) — paste into the chat.`;
+  } catch (e) {
+    // clipboard needs a user gesture / secure origin — fall back to a selectable box
+    const ta = document.createElement("textarea");
+    ta.value = payload;
+    ta.style.cssText = "width:100%;height:90px;font:11px ui-monospace,monospace;margin-top:8px";
+    note.textContent = "Clipboard blocked here — select the text below and copy it:";
+    note.after(ta); ta.focus(); ta.select();
+  }
+}
+document.getElementById("saveCur").onclick = saveCurrent;
+document.getElementById("copyAll").onclick = copyAll;
+document.getElementById("clearSaves").onclick = () => putSaves([]);
 
 function buildPoseList() {
   const el = document.getElementById("poseList");
@@ -508,14 +636,14 @@ function buildPoseList() {
     };
     el.appendChild(b);
   });
-  document.getElementById("poseNote").textContent = shape === "kite"
-    ? "9 poses, all exact. Click one to attach a desk to the selected desk."
+  document.getElementById("poseNote").textContent = shape !== "real"
+    ? "9 poses, all exact (congruent arcs). Click one to attach a desk to the selected desk."
     : "3 poses, none exact. The two curve mates overlap by ≈0.52″ if pushed fully home. Even the facet "
       + "flip only touches at its midpoint — that edge is bowed 0.9u, so it gapes ≈0.47″ at both ends.";
 }
 
 /* four-desk pods, pre-solved (relative to desk 1) */
-const PODS = {"kite":[[[0.0,0.0,0.0],[-29.63,157.5,299.06],[152.06,-50.6,60.94],[93.65,259.9,238.12]],[[0.0,0.0,0.0],[55.0,-73.0,90.0],[12.0,3.0,270.0],[-38.6,-149.06,330.94]],[[0.0,0.0,0.0],[55.0,-73.0,90.0],[12.0,3.0,270.0],[67.0,-70.0,180.0]],[[0.0,0.0,0.0],[-29.63,157.5,299.06],[16.0,143.0,180.0],[32.14,202.36,166.46]]],"real":[[[0.0,0.0,0.0],[-31.15,127.4,325.35],[259.0,126.82,145.35],[227.85,254.22,180.0]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[98.06,-87.09,34.65],[15.66,249.92,290.7]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[239.02,164.49,180.0],[270.17,37.09,145.35]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[98.06,-87.09,34.65],[259.0,126.82,145.35]]]};
+const PODS = {"kite":[[[0.0,0.0,0.0],[-29.63,157.5,299.06],[152.06,-50.6,60.94],[93.65,259.9,238.12]],[[0.0,0.0,0.0],[55.0,-73.0,90.0],[12.0,3.0,270.0],[-38.6,-149.06,330.94]],[[0.0,0.0,0.0],[55.0,-73.0,90.0],[12.0,3.0,270.0],[67.0,-70.0,180.0]],[[0.0,0.0,0.0],[-29.63,157.5,299.06],[16.0,143.0,180.0],[32.14,202.36,166.46]]],"real":[[[0.0,0.0,0.0],[-31.15,127.4,325.35],[259.0,126.82,145.35],[227.85,254.22,180.0]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[98.06,-87.09,34.65],[15.66,249.92,290.7]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[239.02,164.49,180.0],[270.17,37.09,145.35]],[[0.0,0.0,0.0],[-31.15,127.4,325.35],[98.06,-87.09,34.65],[259.0,126.82,145.35]]],"fitted":[[[0.0,0.0,0.0],[-32.39,154.97,301.24],[149.3,-52.68,58.76],[83.32,263.04,242.48]],[[0.0,0.0,0.0],[-32.39,154.97,301.24],[149.3,-52.68,58.76],[86.91,207.26,121.24]],[[0.0,0.0,0.0],[-32.39,154.97,301.24],[17.16,129.11,180.0],[49.55,-25.86,121.24]],[[0.0,0.0,0.0],[-32.39,154.97,301.24],[149.3,-52.68,58.76],[78.38,31.33,180.0]],[[0,0,285],[49.12,-29.46,43.98],[191.55,39.7,103.38],[141.31,71.39,225.94]]]};
 function centerDesks() {
   const all = desks.flatMap(worldPts);
   const xs = all.map(p => p[0]), ys = all.map(p => p[1]);
@@ -535,9 +663,30 @@ function pinwheel() {
   centerDesks();
 }
 
+/* Four real tops in 4-fold rotation about REAL_C — matches the classroom photo. */
+function cluster4() {
+  desks = [{ id: uid++, x: 0, y: 0, r: 0 }];
+  for (let k = 1; k < 4; k++) {
+    const a = k * 90 * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+    desks.push({ id: uid++, r: k * 90,
+      x: REAL_C[0] - (REAL_C[0] * c - REAL_C[1] * s),
+      y: REAL_C[1] - (REAL_C[0] * s + REAL_C[1] * c) });
+  }
+  centerDesks();
+}
+
 function buildPresets() {
   const el = document.getElementById("presets");
   el.innerHTML = "";
+  if (shape === "real") {
+    const c = document.createElement("button");
+    c.textContent = "Cluster of 4 — your room";
+    c.title = "4-fold rotation about the best-fit centre: 17.7\" of seam per joint, "
+            + "58.9\" square, students on the outside.";
+    c.style.cssText = "border-color:#2f8f5b;color:#2f8f5b;font-weight:600";
+    c.onclick = cluster4;
+    el.appendChild(c);
+  }
   if (shape === "kite") {
     const p = document.createElement("button");
     p.textContent = "Apex pinwheel ×4 (gaps)";
@@ -547,9 +696,17 @@ function buildPresets() {
     p.onclick = pinwheel;
     el.appendChild(p);
   }
-  PODS[shape].forEach((cfg, i) => {
+  (PODS[shape] || []).forEach((cfg, i) => {
     const b = document.createElement("button");
-    b.textContent = "Pod " + (i + 1);
+    const FITLBL = ["3 flush \u00b7 93\u2033", "3 flush \u00b7 81\u2033", "3 flush \u00b7 82\u2033",
+                    "3 flush \u00b7 77\u2033", "your ring \u00b7 gaps 0.46\u2033"];
+    b.textContent = shape === "fitted" ? FITLBL[i] : "Pod " + (i + 1);
+    if (shape === "fitted") b.title = i === 4
+      ? "Your closed ring with the 3.84\u00b0 error spread evenly: all 4 joints touch, worst gap "
+        + "0.46\" (was 0.77\"). A closed 4-ring can't be gap-free \u2014 the four turns must sum to "
+        + "360\u00b0 and only 90\u00d74 does, which never touches at all."
+      : "All joints flush, zero loose edge — the best 4-desk arrangements out of 159 "
+        + "non-overlapping ones.";
     b.onclick = () => {
       desks = cfg.map(c => ({ id: uid++, x: c[0], y: c[1], r: c[2] }));
       centerDesks();
@@ -558,7 +715,7 @@ function buildPresets() {
   });
 }
 
-buildPoseList(); buildPresets(); reset();
+buildPoseList(); buildPresets(); renderSaves(); reset();
 </script>
 </body>
 </html>
