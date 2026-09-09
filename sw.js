@@ -1,7 +1,7 @@
 // RosterHelper service worker: network-first for pages (updates land the
 // moment you're online), cache fallback for offline classrooms.
-const CACHE = "rosterhelper-v1";
-const CORE = ["/", "/app/", "/privacy.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
+const CACHE = "rosterhelper-v2";
+const CORE = ["/", "/app/", "/privacy.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", "/vendor/count.js", "/vendor/xlsx.full.min.js", "/vendor/pdf.min.js", "/vendor/pdf.worker.min.js"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
